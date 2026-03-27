@@ -56,6 +56,16 @@ float readAnalog(int pin) {
   return voltage;
 }
 
+// Optional: average multiple readings for stability
+float readAverage(int pin, int samples = NUM_SAMPLES) {
+  float sum = 0;
+  for (int i = 0; i < samples; i++) {
+    sum += readAnalog(pin);
+    delay(10);
+  }
+  return sum / samples;
+}
+
 // Read all physical sensors once and cache values
 void readPhysicalSensors() {
   sensors.requestTemperatures();
@@ -67,15 +77,6 @@ void readPhysicalSensors() {
   currentReadings.h2s = readAverage(PIN_H2S, NUM_SAMPLES);
 }
 
-// Optional: average multiple readings for stability
-float readAverage(int pin, int samples = NUM_SAMPLES) {
-  float sum = 0;
-  for (int i = 0; i < samples; i++) {
-    sum += readAnalog(pin);
-    delay(10);
-  }
-  return sum / samples;
-}
 
 // ============================================
 // REAL SENSOR FUNCTIONS 
@@ -209,7 +210,7 @@ void sendSensorData() {
   delay(50);
 
   // Collect all sensor readings (simulated ones use cached values)
-  StaticJsonDocument<1024> doc;
+  JsonDocument doc;
   doc["Temp"] = getTemperature();
   doc["Turbidity"] = getTurbidity();
   doc["DO"] = getDissolvedOxygen();

@@ -1,81 +1,81 @@
-# Water Quality Sensor Firmware
+# Firmware Cảm biến Chất lượng Nước
 
-This firmware runs on an ESP32 microcontroller to read water quality sensors and send data to your Flask backend.
+Firmware này chạy trên vi điều khiển ESP32 để đọc dữ liệu từ các cảm biến chất lượng nước và gửi dữ liệu đến backend Flask của bạn.
 
-## Hardware Requirements
+## Yêu cầu Phần cứng
 
-- ESP32 development board (e.g., ESP32 DevKit V1)
-- **6 analog/digital sensors for the following physical parameters:**
-  - Temperature (DS18B20 - 1-Wire digital)
-  - Turbidity (analog)
-  - Dissolved Oxygen (DO) (analog)
+- ESP32 development board (ví dụ: ESP32 DevKit V1)
+- **6 cảm biến analog/digital cho các thông số vật lý sau:**
+  - Nhiệt độ (DS18B20 - 1-Wire digital)
+  - Độ đục (Turbidity) (analog)
+  - Oxy hòa tan (DO) (analog)
   - pH (analog)
-  - Ammonia (NH3) (analog)
+  - Amoniac (NH3) (analog)
   - H2S (analog)
 
-**Note:** The AI model expects 14 total parameters. The remaining 8 are **simulated in software** based on correlations with the 6 real sensors:
-- BOD (Biochemical Oxygen Demand)
+**Lưu ý:** Mô hình AI yêu cầu tổng cộng 14 tham số. 8 tham số còn lại được **mô phỏng bằng phần mềm** dựa trên mối tương quan với 6 cảm biến thực:
+- BOD (Biochemical Oxygen Demand - Nhu cầu oxy hóa học)
 - CO2
-- Alkalinity
-- Hardness
+- Alkalinity (Tính kiềm)
+- Hardness (Độ cứng)
 - Calcium
 - Nitrite
 - Phosphorus
-- Plankton
+- Plankton (Vi sinh vật nổi)
 
-## Wiring
+## Kết nối Dây (Wiring)
 
-### Temperature Sensor (DS18B20) - Digital (1-Wire)
-Connect the DS18B20 temperature sensor to **GPIO 4** (Pin D4 on many ESP32 boards):
-- VCC → 3.3V or 5V (check your DS18B20 variant)
+### Cảm biến Nhiệt độ (DS18B20) - Digital (1-Wire)
+Kết nối cảm biến nhiệt độ DS18B20 vào **GPIO 4** (Pin D4 trên nhiều board ESP32):
+- VCC → 3.3V hoặc 5V (kiểm tra phiên bản DS18B20 của bạn)
 - GND → GND
-- DATA → GPIO 4 (with 4.7kΩ pull-up resistor to VCC)
+- DATA → GPIO 4 (với điện trở kéo lên 4.7kΩ lên VCC)
 
-### Analog Sensors (5 sensors)
-Connect the **5 analog sensors** (Turbidity, DO, pH, Ammonia, H2S) to ADC1 pins on the ESP32:
+### Cảm biến Analog (5 cảm biến)
+Kết nối **5 cảm biến analog** (Turbidity, DO, pH, Ammonia, H2S) vào các chân ADC1 trên ESP32:
 
-| Sensor           | ESP32 Pin | ADC Channel |
-|------------------|-----------|-------------|
-| Turbidity        | GPIO 36   | ADC1 CH0    |
-| Dissolved Oxygen | GPIO 35   | ADC1 CH1    |
-| pH               | GPIO 34   | ADC1 CH6    |
-| Ammonia (NH3)    | GPIO 33   | ADC1 CH7    |
-| H2S              | GPIO 32   | ADC1 CH4    |
+| Cảm biến           | Chân ESP32 | Kênh ADC |
+|--------------------|------------|----------|
+| Độ đục (Turbidity) | GPIO 36    | ADC1 CH0 |
+| Oxy hòa tan (DO)   | GPIO 35    | ADC1 CH1 |
+| pH                 | GPIO 34    | ADC1 CH6 |
+| Amoniac (NH3)      | GPIO 33    | ADC1 CH7 |
+| H2S                | GPIO 32    | ADC1 CH4 |
 
-**Important:**
-- Use ADC1 pins (GPIO32-39) for analog readings on ESP32
-- Ensure sensor output voltage is 0-3.3V (ESP32 ADC max is 3.3V). Use voltage dividers if needed.
-- Power sensors appropriately (some may require 5V or excitation voltage).
-- The 8 simulated parameters (BOD, CO2, Alkalinity, Hardness, Calcium, Nitrite, Phosphorus, Plankton) are **software-generated** and require no hardware connection.
+**Quan trọng:**
+- Sử dụng chân ADC1 (GPIO32-39) để đọc analog trên ESP32
+- Đảm bảo điện áp đầu ra cảm biến là 0-3.3V (ADC ESP32 tối đa 3.3V). Sử dụng chia điện áp nếu cần.
+- Cấp nguồn cho cảm biến phù hợp (một số có yêu cầu 5V hoặc điện áp kích hoạt).
+- 8 tham số được mô phỏng (BOD, CO2, Alkalinity, Hardness, Calcium, Nitrite, Phosphorus, Plankton) được **tạo ra bằng phần mềm** và không cần kết nối phần cứng.
 
-## Configuration
+## Cấu hình
 
-Before uploading, edit the configuration section in `water_quality.ino`:
+Trước khi upload, hãy chỉnh sửa phần cấu hình trong `water_quality.ino`:
 
-1. `WIFI_SSID` / `WIFI_PASSWORD` - Your WiFi network
-2. `BACKEND_URL` - Your Flask backend URL (format: `http://IP_ADDRESS:5000/prediction/predict`)
-3. (Optional) `SAMPLING_INTERVAL` - How often to send data (default: 60000ms = 1 minute)
-4. (Optional) `NUM_SAMPLES` - Number of analog samples to average (default: 10)
+1. `WIFI_SSID` / `WIFI_PASSWORD` - Mạng WiFi của bạn
+2. `BACKEND_URL` - URL Flask backend của bạn (định dạng: `http://IP_ADDRESS:5000/prediction/predict`)
+3. (Tùy chọn) `SAMPLING_INTERVAL` - Tần suất gửi dữ liệu (mặc định: 60000ms = 1 phút)
+4. (Tùy chọn) `NUM_SAMPLES` - Số lượng mẫu analog cần lấy trung bình (mặc định: 10)
 
-## Sensor Calibration
+## Hiệu chuẩn Cảm biến
 
-### Physical Sensors (6)
+### Cảm biến Vật lý (6)
 
-You **must** calibrate these functions with your actual sensor datasheets:
+Bạn **phải** hiệu chuẩn các hàm này với bảng dữ liệu cảm biến thực tế của mình:
 
-- `getTemperature()` → Temperature (°C) - DS18B20 provides calibrated Celsius
-- `getTurbidity()` → Turbidity (NTU) - Convert voltage to NTU using: `voltage * 1000.0`
-- `getDissolvedOxygen()` → DO (mg/L) - Convert voltage to mg/L using: `voltage * 10.0`
-- `getPH()` → pH (0-14) - Convert voltage to pH using: `voltage * (14.0 / 3.3)`
-- `getAmmonia()` → Ammonia/NH3 (mg/L) - Convert voltage to mg/L using: `voltage * 10.0`
-- `getH2S()` → H2S (mg/L) - Convert voltage to mg/L using: `voltage * 10.0`
+- `getTemperature()` → Nhiệt độ (°C) - DS18B20 cung cấp Celsius đã hiệu chuẩn
+- `getTurbidity()` → Độ đục (NTU) - Chuyển đổi điện áp sang NTU bằng: `voltage * 1000.0`
+- `getDissolvedOxygen()` → DO (mg/L) - Chuyển đổi điện áp sang mg/L bằng: `voltage * 10.0`
+- `getPH()` → pH (0-14) - Chuyển đổi điện áp sang pH bằng: `voltage * (14.0 / 3.3)`
+- `getAmmonia()` → Amoniac/NH3 (mg/L) - Chuyển đổi điện áp sang mg/L bằng: `voltage * 10.0`
+- `getH2S()` → H2S (mg/L) - Chuyển đổi điện áp sang mg/L bằng: `voltage * 10.0`
 
-Typical approaches:
-- Linear conversion: `value = voltage * slope + intercept`
-- Lookup tables
-- Polynomial equations
+Các phương pháp phổ biến:
+- Chuyển đổi tuyến tính: `value = voltage * slope + intercept`
+- Bảng tra (lookup tables)
+- Phương trình đa thức (polynomial equations)
 
-Example from the code:
+Ví dụ từ code:
 ```cpp
 float getTemperature() {
   sensors.requestTemperatures();
@@ -83,53 +83,109 @@ float getTemperature() {
 }
 ```
 
-### Simulated Sensors (8)
+### Cảm biến Mô phỏng (8)
 
-These are **software-generated** based on correlations with real sensors. The current formulas are rough estimates. You can adjust `getBOD()`, `getCO2()`, `getAlkalinity()`, `getHardness()`, `getCalcium()`, `getNitrite()`, `getPhosphorus()`, and `getPlankton()` to match your domain knowledge or historical data patterns.
+Đây là các giá trị **được tạo ra bằng phần mềm** dựa trên mối tương quan với cảm biến thực. Các công thức hiện tại là ước tính thô. Bạn có thể điều chỉnh `getBOD()`, `getCO2()`, `getAlkalinity()`, `getHardness()`, `getCalcium()`, `getNitrite()`, `getPhosphorus()`, và `getPlankton()` để khớp với kiến thức lĩnh vực hoặc mẫu dữ liệu lịch sử của bạn.
 
-## Installation
+## Cài đặt với PlatformIO (Khuyến nghị)
 
-### Prerequisites
+### Yêu cầu tiên quyết
 
-1. Install Arduino IDE or PlatformIO (VS Code extension)
+1. **PlatformIO** - Cài đặt qua VS Code (extension PlatformIO IDE) hoặc CLI:
+   ```bash
+   pip install platformio
+   ```
+
+2. **ESP32 Board Support** - PlatformIO tự động tải về khi build lần đầu
+
+### File `platformio.ini`
+
+Project sử dụng PlatformIO với file cấu hình `platformio.ini`:
+
+```ini
+[env:esp32dev]
+platform = espressif32
+board = esp32dev
+framework = arduino
+
+lib_deps =
+    bblanchon/ArduinoJson
+    paulstoffregen/OneWire
+    milesburton/DallasTemperature
+```
+
+**Các mục cấu hình:**
+- `platform = espressif32` - Nền tảng ESP32
+- `board = esp32dev` - Board ESP32 DevKit (có thể thay đổi nếu dùng board khác)
+- `framework = arduino` - Sử dụng Arduino framework
+- `lib_deps` - Các thư viện dependencies, PlatformIO sẽ tự động tải về và cài đặt:
+  - `bblanchon/ArduinoJson` - Thư viện JSON serialization
+  - `paulstoffregen/OneWire` - Bus 1-Wire cho DS18B20
+  - `milesburton/DallasTemperature` - Thư viện cảm biến nhiệt độ
+
+### Upload Firmware với PlatformIO
+
+```bash
+cd /home/node/project1/firmware
+pio run -t upload
+```
+
+**Các lệnh PlatformIO**
+```bash
+pio run                    # Build firmware
+pio run -t upload          # Build và upload
+pio run -t monitor         # Upload và mở Serial Monitor
+pio device list            # Liệt kê các board ESP32 đã kết nối
+pio run -t clean           # Xóa build artifacts
+```
+
+**Khi upload:**
+1. Kết nối ESP32 qua USB
+2. Chạy lệnh upload (`pio run -t upload`)
+3. PlatformIO sẽ tự động compile dependencies và upload firmware
+
+
+## Cài đặt với Arduino IDE (Alternative)
+
+1. Cài đặt Arduino IDE 
 2. Add ESP32 board support:
-   - In Arduino IDE: File → Preferences → Additional Boards Manager URLs → `https://dl.espressif.com/dl/package_esp32_index.json`
-   - Then install "ESP32" via Boards Manager
-3. Install required libraries (Arduino IDE Library Manager):
-   - **ArduinoJson** (by Benoit Blanchon) - for JSON serialization
-   - **OneWire** - for DS18B20 temperature sensor
-   - **DallasTemperature** - for DS18B20 temperature sensor
-   - HTTPClient (usually included with ESP32 core)
+   - Trong Arduino IDE: File → Preferences → Additional Boards Manager URLs → `https://dl.espressif.com/dl/package_esp32_index.json`
+   - Sau đó cài "ESP32" qua Boards Manager
+3. Cài đặt các thư viện cần thiết (Arduino IDE Library Manager):
+   - **ArduinoJson** (by Benoit Blanchon) - để serialize JSON
+   - **OneWire** - cho cảm biến DS18B20
+   - **DallasTemperature** - cho cảm biến DS18B20
+   - HTTPClient (thường có sẵn với ESP32 core)
 
-### Library Installation (Arduino IDE)
-- Search for "ArduinoJson" and install
-- Search for "OneWire" and install
-- Search for "DallasTemperature" and install
+### Cài đặt Thư viện (Arduino IDE)
+- Tìm kiếm "ArduinoJson" và cài đặt
+- Tìm kiếm "OneWire" và cài đặt
+- Tìm kiếm "DallasTemperature" và cài đặt
 
-### Upload
+### Upload với Arduino IDE
 
-1. Select your ESP32 board (e.g., "ESP32 Dev Module")
-2. Select the correct COM port
-3. Click Upload
+1. Chọn board ESP32 (ví dụ: "ESP32 Dev Module")
+2. Chọn cổng COM phù hợp
+3. Nhấn Upload
 
-## Testing
+## Kiểm tra (Testing)
 
-1. Open Serial Monitor at 115200 baud
-2. Watch for WiFi connection and data being sent every 60 seconds
-3. You should see JSON output like:
+1. Mở Serial Monitor ở 115200 baud
+2. Quan sát kết nối WiFi và dữ liệu được gửi mỗi 60 giây
+3. Bạn sẽ thấy đầu ra JSON như:
 ```json
 {"Temp":24.5,"Turbidity":3.2,"DO":7.8,"BOD":1.24,"CO2":7.84,"pH":6.98,"Alkalinity":40.32,"Hardness":114.95,"Calcium":52.1,"Ammonia":0.02,"Nitrite":0.001,"Phosphorus":0.99,"H2S":0.0197,"Plankton":3092.0}
 ```
-4. Check your Flask backend to see if data arrives and predictions are returned
+4. Kiểm tra backend Flask của bạn để xem dữ liệu có đến và predictions được trả về
 
-## Backend Notes
+## Ghi chú Backend
 
-- The firmware POSTs JSON to `/prediction/predict` with all 14 parameters
-- Backend returns quality prediction and solution: `{"quality_label":2,"quality_name":"Good","solution":"Monitor regularly."}`
-- The firmware prints the response to Serial (you could add an OLED display, LEDs, etc. for visual feedback)
-- Backend automatically stores all predictions in SQLite database
+- Firmware POST JSON đến `/prediction/predict` với tất cả 14 tham số
+- Backend trả về dự đoán chất lượng và giải pháp: `{"quality_label":2,"quality_name":"Good","solution":"Monitor regularly."}`
+- Firmware in phản hồi ra Serial (bạn có thể thêm màn hình OLED, LED, v.v. để có phản hồi trực quan)
+- Backend tự động lưu tất cả predictions vào cơ sở dữ liệu SQLite
 
-## API Endpoint Format
+## Định dạng API Endpoint
 
 **Endpoint:** `POST http://your-backend-ip:5000/prediction/predict`
 
@@ -162,22 +218,23 @@ These are **software-generated** based on correlations with real sensors. The cu
 }
 ```
 
-## Troubleshooting
+## Khắc phục Sự cố (Troubleshooting)
 
-- **ADC readings unstable?** Try increasing `NUM_SAMPLES` or add capacitors to sensor outputs.
-- **Temperature sensor not detected?** Check DS18B20 wiring (data pin to GPIO 4) and 4.7kΩ pull-up resistor.
-- **WiFi drops?** The code attempts reconnection with exponential backoff.
-- **400 Bad Request from backend?** Check JSON formatting and parameter names match exactly.
-- **No data in backend?** Verify ESP32 and backend are on the same network, and port 5000 is accessible. Check firewall settings.
-- **Library errors?** Ensure all required libraries (ArduinoJson, OneWire, DallasTemperature) are installed.
+- **Đọc ADC không ổn định?** Thử tăng `NUM_SAMPLES` hoặc thêm điện dung vào đầu ra cảm biến.
+- **Không phát hiện cảm biến nhiệt độ?** Kiểm tra kết nối DS18B20 (chân dữ liệu vào GPIO 4) và điện trở kéo lên 4.7kΩ.
+- **WiFi bị ngắt?** Code cố gắng kết nối lại với exponential backoff.
+- **400 Bad Request từ backend?** Kiểm tra định dạng JSON và tên tham số khớp chính xác.
+- **Không có dữ liệu trong backend?** Xác minh ESP32 và backend cùng mạng, và port 5000 có thể truy cập được. Kiểm tra cài đặt firewall.
+- **Lỗi PlatformIO?** Đảm bảo chạy lệnh từ thư mục `firmware/`
+- **Lỗi thư viện?** Đảm bảo tất cả thư viện cần thiết (ArduinoJson, OneWire, DallasTemperature) đã được cài đặt trong `platformio.ini`.
 
-## Customization Ideas
+## Ý tưởng Tùy chỉnh
 
-- Store readings locally if WiFi is down (use SPIFFS or SD card)
-- Add MQTT instead of HTTP for IoT integration
-- Include device_id in the JSON for multi-device tracking
-- Display results on an OLED screen (SSD1306)
-- Add LEDs or buzzer for status indication/alert
-- Add buttons to trigger manual reads or configuration
-- Power from battery with deep sleep modes to save energy
-- Implement configurable backend URL via WiFi captive portal or serial commands
+- Lưu trữ readings cục bộ nếu WiFi ngừng hoạt động (dùng SPIFFS hoặc thẻ SD)
+- Thêm MQTT thay vì HTTP cho tích hợp IoT
+- Bao gồm device_id trong JSON để theo dõi nhiều thiết bị
+- Hiển thị kết quả trên màn hình OLED (SSD1306)
+- Thêm LED hoặc buzzer cho chỉ báo trạng thái/cảnh báo
+- Thêm nút để kích hoạt đọc thủ công hoặc cấu hình
+- Cấp nguồn từ pin với chế độ deep sleep để tiết kiệm năng lượng
+- Thực hiện URL backend có thể cấu hình qua WiFi captive portal hoặc lệnh serial
