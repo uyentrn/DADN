@@ -5,13 +5,13 @@
 #include <DallasTemperature.h>
 
 // ============================================
-// CONFIGURATION - Edit these values
+// CONFIGURATION - UPDATE THESE BEFORE UPLOADING
 // ============================================
 const char* WIFI_SSID = "your_wifi_ssid";
 const char* WIFI_PASSWORD = "your_wifi_password";
 const char* BACKEND_URL = "http://your-backend-ip:5000/prediction/predict";
 
-// Sensor Pin Assignments - ONLY 6 PHYSICAL SENSORS
+// Sensor Pin Assignments 
 const int PIN_TEMP = 4;            // Temperature - DS18B20 (1-Wire digital)
 const int PIN_TURBIDITY = 36;     // Turbidity (real, analog)
 const int PIN_DO = 35;            // Dissolved Oxygen (real, analog)
@@ -32,7 +32,7 @@ const int WIFI_MAX_ATTEMPTS = 20;
 const unsigned long WIFI_RETRY_DELAY = 500;
 
 // ============================================
-// SENSOR DATA STRUCTURE (caching to avoid duplicate reads)
+// SENSOR DATA STRUCTURE 
 // ============================================
 
 struct SensorReadings {
@@ -78,7 +78,7 @@ float readAverage(int pin, int samples = NUM_SAMPLES) {
 }
 
 // ============================================
-// REAL SENSOR FUNCTIONS (6 physical sensors)
+// REAL SENSOR FUNCTIONS 
 // ============================================
 
 float getTemperature() {
@@ -86,27 +86,22 @@ float getTemperature() {
 }
 
 float getTurbidity() {
-  // TODO: Calibrate based on your turbidity sensor (e.g., convert voltage to NTU)
   return currentReadings.turbidity * 1000.0;
 }
 
 float getDissolvedOxygen() {
-  // TODO: Calibrate based on your DO sensor
   return currentReadings.dissolvedOxygen * 10.0;
 }
 
 float getPH() {
-  // TODO: Calibrate pH sensor (typically 0-3V → pH 0-14)
   return currentReadings.ph * (14.0 / 3.3);
 }
 
 float getAmmonia() {
-  // TODO: Calibrate ammonia sensor
   return currentReadings.ammonia * 10.0;
 }
 
 float getH2S() {
-  // TODO: Calibrate H2S sensor
   return currentReadings.h2s * 10.0;
 }
 
@@ -116,7 +111,6 @@ float getH2S() {
 
 // These sensors are not physically connected.
 // They are estimated based on correlations with real sensors.
-// IMPORTANT: Use cached voltage values to avoid duplicate ADC reads.
 
 float getBOD() {
   // BOD correlates with DO and temperature
@@ -253,7 +247,7 @@ void sendSensorData() {
       Serial.print("Response: ");
       Serial.println(response);
     } else if (httpCode > 0) {
-      // HTTP error (4xx, 5xx)
+      // HTTP error 
       Serial.print("HTTP error: ");
       Serial.println(httpCode);
       if (httpCode == 400) {
@@ -262,14 +256,14 @@ void sendSensorData() {
         Serial.println("Server error - check backend logs");
       }
     } else {
-      // Network error (connection failed, timeout, etc.)
+      // Network error 
       Serial.print("POST failed, error: ");
       Serial.println(http.errorToString(httpCode).c_str());
     }
 
     http.end();
   } else {
-    Serial.println("WiFi not connected, skipping send");
+    Serial.println("WiFi not connected");
   }
 }
 
@@ -283,7 +277,6 @@ void setup() {
   Serial.println("\n=== Water Quality Sensor Firmware ===");
   sensors.begin();
 
-  // Initialize analog pins as inputs
   pinMode(PIN_TURBIDITY, INPUT);
   pinMode(PIN_DO, INPUT);
   pinMode(PIN_PH, INPUT);
