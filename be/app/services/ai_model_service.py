@@ -5,6 +5,7 @@ import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
+import numpy as np
 
 from app.database.db import db
 from app.models.input_model import InputModel, OutputModel
@@ -146,21 +147,59 @@ class AIModelService:
 
         features = {col: float(data.get(col, 0)) for col in FEATURE_COLUMNS}
         df = pd.DataFrame([features])
-        prediction = self.model.predict(df)[0]
 
-        # Map numeric prediction to quality name
-        quality_mapping = {
-            0: "Poor",
-            1: "Moderate", 
-            2: "Good"
-        }
-        quality_name = quality_mapping.get(prediction, "Unknown")
+        # Probabilities for classes [0,1,2]
+        proba = self.model.predict_proba(df)[0]
+        proba = np.asarray(proba, dtype=float)
+
+        # continuous expected class in [0,2]
+        expected_class = float(np.dot(proba, np.array([0.0, 1.0, 2.0])))
+
+        # scale to WQI [0,100] - chưa làm tròn
+        wqi_score = expected_class / 2.0 * 100.0
+
+        # confidence %
+        max_p = float(np.max(proba))
+        confidence_score = max_p * 100.0
+
+        wqi_label = self.getWqiLabel(wqi_score)
+        risk_status, risk_level = self.getRiskFromWQILabel(wqi_label)
+
+        # forecast_24h range
+        delta = max(1.0, (1.0 - max_p) * 10.0)
+        low = max(0.0, wqi_score - delta)
+        high = min(100.0, wqi_score + delta)
+
+        trend = "Stable" if delta <= 3.0 else "Unstable"
 
         return {
-            "quality_label": int(prediction),
-            "quality_name": quality_name,
-            "solution": self._solution_for(quality_name),
+            "wqi": {"score": float(wqi_score), "max": 100, "label": wqi_label},
+            "contamination_risk": {"status": risk_status, "risk_level": int(risk_level)},
+            "forecast_24h": {
+                "trend": trend,
+                "predicted_wqi_range": [float(low), float(high)],
+                "model_used": "Random Forest",
+                "confidence_score": float(confidence_score),
+            },
         }
+        
+    def getWqiLabel(self, wqi_score: float) -> str:
+        if wqi_score >= 90:
+            return "Excellent"
+        if wqi_score >= 70:
+            return "Good"
+        if wqi_score >= 50:
+            return "Fair"
+        return "Poor"
+
+    def getRiskFromWQILabel(self, label: str):
+        mapping = {
+            "Excellent": ("Low Risk", 1),
+            "Good": ("Medium Risk", 2),
+            "Fair": ("High Risk", 3),
+            "Poor": ("High Risk", 3),
+        }
+        return mapping.get(label, ("Unknown", 0))
 
     def _solution_for(self, quality_name: str) -> str:
         mapping = {

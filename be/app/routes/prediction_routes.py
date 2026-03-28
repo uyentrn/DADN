@@ -49,8 +49,6 @@ def predict():
             Phosphorus=float(data.get("Phosphorus", 0)),
             H2S=float(data.get("H2S", 0)),
             Plankton=float(data.get("Plankton", 0)),
-            quality_label=result.get("quality_label"),
-            quality_name=result.get("quality_name"),
             solution=result.get("solution"),
         )
         db.session.add(record)
