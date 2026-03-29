@@ -33,7 +33,7 @@ class RegisterUserUseCase:
 
         existing_user = self._user_repository.get_by_email(normalized_email)
         if existing_user is not None:
-            raise ConflictError("email already exists")
+            raise ConflictError("Email already exists")
 
         try:
             user = User.create_new(

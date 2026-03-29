@@ -1,5 +1,4 @@
-
-# Backend 
+# Backend
 
 ---
 
@@ -60,29 +59,34 @@ be/
 ## Trách nhiệm của các lớp (Layer Responsibilities)
 
 ### `domain/`
+
 - Chứa thực thể (entity), đối tượng giá trị (value object), các quy tắc nghiệp vụ (domain rules).
 
-
 ### `application/`
+
 - Chứa các trường hợp sử dụng (use case) và điều phối luồng nghiệp vụ.
 - Định nghĩa giao diện (interfaces) cho repository và các cổng bảo mật (security ports).
 
 ### `infrastructure/`
+
 - Kết nối MongoDB, triển khai Repository và Document mapper.
 - Chứa các dịch vụ hạ tầng: JWT service, Password hasher.
 
 ### `presentation/`
+
 - Flask routes, Request validation và Middleware HTTP.
 - Chuyển đổi dữ liệu phản hồi (Serializer).
 - Ánh xạ lỗi từ application exception sang mã trạng thái HTTP.
 
 ---
-## Cài đặt và Chạy ( Đang test trên Ubuntu , Ai làm Win sửa lại nha) 
+
+## Cài đặt và Chạy ( Đang test trên Ubuntu , Ai làm Win sửa lại nha)
 
 ```bash
 cd /home/dungne/DADN/be
 python3 -m venv .venv
 source .venv/bin/activate
+# source .venv/Scripts/activate
 pip install -r requirements.txt
 python3 run.py
 ```
@@ -95,12 +99,14 @@ python3 run.py
 ## Danh sách API (API Summary)
 
 ### 1. Hệ thống & Xác thực
+
 - `GET /health`: Kiểm tra trạng thái hệ thống.
 - `POST /auth/register`: Đăng ký tài khoản.
 - `POST /auth/login`: Đăng nhập lấy JWT.
 - `POST /auth/logout`: Đăng xuất (Stateless).
 
 ### 2. Trạm cảm biến (Cần Authorization Header)
+
 - `POST /api/sensors`: Tạo trạm mới.
 - `GET /api/sensors`: Lấy danh sách (Phân trang: `page`, `limit`).
 - `GET /api/sensors/<id>`: Xem chi tiết.
@@ -112,18 +118,23 @@ python3 run.py
 ## Định dạng phản hồi lỗi
 
 Tất cả lỗi đều tuân theo format:
+
 ```json
 {
-  "error": "Nội dung thông báo lỗi chi tiết"
+    "error": "Nội dung thông báo lỗi chi tiết"
 }
 ```
 
 ## Hướng dẫn phát triển (Development Guide)
 
 Khi thêm tính năng mới, hãy tuân theo trình tự:
+
 1. Thêm entity tại `app/domain/`.
 2. Thêm use case và interface tại `app/application/`.
 3. Triển khai repository tại `app/infrastructure/`.
 4. Thêm validator, serializer và route tại `app/presentation/`.
 5. Đăng ký dependencies tại `app/bootstrap/container.py`.
+
+```
+
 ```

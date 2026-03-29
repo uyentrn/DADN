@@ -6,9 +6,9 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 import numpy as np
+from datetime import datetime
 
-from app.database.db import db
-from app.models.input_model import InputModel, OutputModel
+from app.infrastructure.persistence.mongo.connection import get_mongo_database
 
 
 FEATURE_COLUMNS = [
@@ -39,38 +39,41 @@ class AIModelService:
         # Remove old model file to force retrain
         if os.path.exists(self.MODEL_PATH):
             os.remove(self.MODEL_PATH)
-            print("🗑️  Removed old model file")
+            print("Removed old model file")
         
         # Try to train from WQD.xlsx file first
         excel_file = "WQD.xlsx"
         if os.path.exists(excel_file):
-            print("📊 Training from WQD.xlsx file...")
+            print("Training from WQD.xlsx file...")
             try:
                 df = pd.read_excel(excel_file)
                 result = self.train_model_from_dataframe(df)
                 if "error" not in result:
-                    print("✅ Auto-trained AI model from WQD.xlsx")
+                    print("Auto-trained AI model from WQD.xlsx")
                     return
                 else:
-                    print(f"❌ Failed to train from WQD.xlsx: {result['error']}")
+                    print(f"Failed to train from WQD.xlsx: {result['error']}")
             except Exception as e:
-                print(f"❌ Error reading WQD.xlsx: {e}")
+                print(f"Error reading WQD.xlsx: {e}")
         
         # Fallback to training from database
-        print("📊 Training from database...")
+        print("Training from database...")
         result = self.train_model_from_db()
         if "error" not in result:
-            print("✅ Auto-trained AI model from database")
+            print("Auto-trained AI model from database")
         else:
-            print("⚠️  No labeled data available for training - model not loaded")
+            print("No labeled data available for training - model not loaded")
 
     def load_model(self):
         if os.path.exists(self.MODEL_PATH):
             self.model = joblib.load(self.MODEL_PATH)
 
     def test_db(self):
-        count = OutputModel.query.count()
-        return {"record_count": count}
+        db = get_mongo_database()
+        if db is None:
+            return {"error": "MongoDB not connected"}
+        count = db.get_collection("predictions").count_documents({})
+        return {"record_count": int(count)}
 
     def train_model_from_file(self, file):
         df = pd.read_excel(file)
@@ -111,15 +114,24 @@ class AIModelService:
         }
 
     def train_model_from_db(self):
-        records = OutputModel.query.filter(OutputModel.quality_name.isnot(None)).all()
+        db = get_mongo_database()
+        if db is None:
+            return {"error": "MongoDB not connected"}
 
-        if not records:
+        coll = db.get_collection("predictions")
+        cursor = coll.find({"quality_name": {"$exists": True, "$ne": None}})
+        docs = list(cursor)
+
+        if not docs:
             return {"error": "No labeled data available for training"}
 
-        df = pd.DataFrame([{
-            **{col: getattr(r, col) for col in FEATURE_COLUMNS},
-            "label": r.quality_name,
-        } for r in records])
+        df = pd.DataFrame([
+            {
+                **{col: (doc.get(col) if doc.get(col) is not None else 0) for col in FEATURE_COLUMNS},
+                "label": doc.get("quality_name"),
+            }
+            for doc in docs
+        ])
 
         X = df[FEATURE_COLUMNS]
         y = df["label"]
@@ -143,7 +155,9 @@ class AIModelService:
         if self.model is None:
             self.load_model()
             if self.model is None:
-                return {"error": "Model not loaded"}
+                self.auto_train()
+                if self.model is None:
+                    return {"error": "Model not loaded"}
 
         features = {col: float(data.get(col, 0)) for col in FEATURE_COLUMNS}
         df = pd.DataFrame([features])
