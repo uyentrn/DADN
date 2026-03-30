@@ -21,7 +21,7 @@ def create_app():
     app.register_blueprint(auth_bp)
     app.register_blueprint(sensor_station_bp)
     app.register_blueprint(prediction_bp)
-    
+
     @app.route("/")
     def home():
         return {
@@ -29,6 +29,7 @@ def create_app():
             "message": "Backend is running"
     }
     @app.get("/health")
+    
     def health_check():
         mongo_state = get_mongo_state()
         status = (
