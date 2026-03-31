@@ -36,12 +36,10 @@ class AIModelService:
         self.load_model()
     
     def auto_train(self):
-        # Remove old model file to force retrain
         if os.path.exists(self.MODEL_PATH):
             os.remove(self.MODEL_PATH)
             print("Removed old model file")
         
-        # Try to train from WQD.xlsx file first
         excel_file = "WQD.xlsx"
         if os.path.exists(excel_file):
             print("Training from WQD.xlsx file...")
@@ -56,7 +54,6 @@ class AIModelService:
             except Exception as e:
                 print(f"Error reading WQD.xlsx: {e}")
         
-        # Fallback to training from database
         print("Training from database...")
         result = self.train_model_from_db()
         if "error" not in result:
@@ -80,7 +77,6 @@ class AIModelService:
         return self.train_model_from_dataframe(df)
 
     def train_model_from_dataframe(self, df):
-        # Normalize column names
         df.columns = (
             df.columns
             .str.replace(r"\(.*?\)", "", regex=True)
@@ -91,7 +87,6 @@ class AIModelService:
         if "Water Quality" not in df.columns:
             return {"error": "File must contain a 'Water Quality' column"}
 
-        # Prepare data for training
         X = df[FEATURE_COLUMNS]
         y = df["Water Quality"]
 
@@ -162,15 +157,20 @@ class AIModelService:
         features = {col: float(data.get(col, 0)) for col in FEATURE_COLUMNS}
         df = pd.DataFrame([features])
 
+        prediction = self.model.predict(df)[0]
+
         # Probabilities for classes [0,1,2]
         proba = self.model.predict_proba(df)[0]
         proba = np.asarray(proba, dtype=float)
 
         # continuous expected class in [0,2]
-        expected_class = float(np.dot(proba, np.array([0.0, 1.0, 2.0])))
+        class_values = self.model.classes_
+        expected_class = float(np.dot(proba, class_values))
 
         # scale to WQI [0,100] - chưa làm tròn
-        wqi_score = expected_class / 2.0 * 100.0
+        # wqi_score = expected_class / 2.0 * 100.0
+
+        wqi_score = (1 - expected_class / 2.0) * 100
 
         # confidence %
         max_p = float(np.max(proba))
@@ -187,7 +187,7 @@ class AIModelService:
         trend = "Stable" if delta <= 3.0 else "Unstable"
 
         return {
-            "wqi": {"score": float(wqi_score), "max": 100, "label": wqi_label},
+            "wqi": {"prediction": int(prediction),"score": float(wqi_score), "max": 100, "label": wqi_label},
             "contamination_risk": {"status": risk_status, "risk_level": int(risk_level)},
             "forecast_24h": {
                 "trend": trend,
@@ -208,12 +208,11 @@ class AIModelService:
 
     def getRiskFromWQILabel(self, label: str):
         mapping = {
-            "Excellent": ("Low Risk", 1),
-            "Good": ("Medium Risk", 2),
-            "Fair": ("High Risk", 3),
-            "Poor": ("High Risk", 3),
+            "Excellent": ("Low Risk", 0),
+            "Good": ("Medium Risk", 1),
+            "Poor": ("High Risk", 2),
         }
-        return mapping.get(label, ("Unknown", 0))
+        return mapping.get(label, ("Unknown", 7))
 
     def _solution_for(self, quality_name: str) -> str:
         mapping = {
