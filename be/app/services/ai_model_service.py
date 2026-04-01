@@ -157,19 +157,17 @@ class AIModelService:
         features = {col: float(data.get(col, 0)) for col in FEATURE_COLUMNS}
         df = pd.DataFrame([features])
 
+        # prediction is value 0,1,2 for Excellent, Good, Poor respectively. 
+        # We will convert it to WQI score and label in the response
         prediction = self.model.predict(df)[0]
 
-        # Probabilities for classes [0,1,2]
         proba = self.model.predict_proba(df)[0]
         proba = np.asarray(proba, dtype=float)
 
-        # continuous expected class in [0,2]
         class_values = self.model.classes_
         expected_class = float(np.dot(proba, class_values))
 
-        # scale to WQI [0,100] - chưa làm tròn
-        # wqi_score = expected_class / 2.0 * 100.0
-
+        # wqi_score is calculated as a weighted score based on the expected class value, normalized to a 0-100 scale
         wqi_score = (1 - expected_class / 2.0) * 100
 
         # confidence %
@@ -179,11 +177,14 @@ class AIModelService:
         wqi_label = self.getWqiLabel(wqi_score)
         risk_status, risk_level = self.getRiskFromWQILabel(wqi_label)
 
-        # forecast_24h range
+        # forecast_24h range is calculated based on the confidence of the prediction
+        # if confidence is high, we expect less variation in the next 24h, if confidence is low, we expect more variation.
+        # The range is centered around the predicted WQI score and expands more if confidence is low.
         delta = max(1.0, (1.0 - max_p) * 10.0)
         low = max(0.0, wqi_score - delta)
         high = min(100.0, wqi_score + delta)
 
+        # trend is stable if delta is small, unstable if delta is large
         trend = "Stable" if delta <= 3.0 else "Unstable"
 
         return {
@@ -195,6 +196,7 @@ class AIModelService:
                 "model_used": "Random Forest",
                 "confidence_score": float(confidence_score),
             },
+            "solution": self._solution_for(wqi_label),
         }
         
     def getWqiLabel(self, wqi_score: float) -> str:
@@ -203,7 +205,7 @@ class AIModelService:
         if wqi_score >= 70:
             return "Good"
         if wqi_score >= 50:
-            return "Fair"
+            return "Poor"
         return "Poor"
 
     def getRiskFromWQILabel(self, label: str):
