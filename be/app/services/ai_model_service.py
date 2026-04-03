@@ -54,12 +54,12 @@ class AIModelService:
             except Exception as e:
                 print(f"Error reading WQD.xlsx: {e}")
         
-        print("Training from database...")
-        result = self.train_model_from_db()
-        if "error" not in result:
-            print("Auto-trained AI model from database")
-        else:
-            print("No labeled data available for training - model not loaded")
+        # print("Training from database...")
+        # result = self.train_model_from_db()
+        # if "error" not in result:
+        #     print("Auto-trained AI model from database")
+        # else:
+        #     print("No labeled data available for training - model not loaded")
 
     def load_model(self):
         if os.path.exists(self.MODEL_PATH):

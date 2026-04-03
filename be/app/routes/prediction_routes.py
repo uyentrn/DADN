@@ -36,7 +36,28 @@ def predict():
 
     try:
         db = get_mongo_database()
+       
         if db is not None:
+            coll = db.get_collection("predictions")
+            doc = {
+                "Temp": float(data.get("Temp", 0)),
+                "Turbidity": float(data.get("Turbidity", 0)),
+                "DO": float(data.get("DO", 0)),
+                "BOD": float(data.get("BOD", 0)),
+                "CO2": float(data.get("CO2", 0)),
+                "pH": float(data.get("pH", 0)),
+                "Alkalinity": float(data.get("Alkalinity", 0)),
+                "Hardness": float(data.get("Hardness", 0)),
+                "Calcium": float(data.get("Calcium", 0)),
+                "Ammonia": float(data.get("Ammonia", 0)),
+                "Nitrite": float(data.get("Nitrite", 0)),
+                "Phosphorus": float(data.get("Phosphorus", 0)),
+                "H2S": float(data.get("H2S", 0)),
+                "Plankton": float(data.get("Plankton", 0)),
+                "prediction": result,
+                "created_at": datetime.utcnow(),
+            }
+            coll.insert_one(doc)
             # Create PredictModule
             predict_module = PredictModule.create_new(
                 wqi_score=result["wqi"]["score"],
@@ -48,8 +69,8 @@ def predict():
                 input_sensor_id="temp",  # placeholder
                 id_sensor="sensor1",  # placeholder
             )
-            coll = db.get_collection("predictModule")
-            doc = {
+            coll_ = db.get_collection("predictModule")
+            doc_ = {
                 "wqi_score": predict_module.wqi_score,
                 "contamination_risk": predict_module.contamination_risk,
                 "forecast_24h": predict_module.forecast_24h,
@@ -64,7 +85,7 @@ def predict():
                 "created_at": predict_module.created_at,
                 "updated_at": predict_module.updated_at,
             }
-            coll.insert_one(doc)
+            coll_.insert_one(doc_)
     except Exception as e:
         print(f"Error saving prediction: {e}")
 
