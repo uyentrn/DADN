@@ -5,7 +5,7 @@ from datetime import datetime
 
 from app.infrastructure.persistence.mongo.connection import get_mongo_database
 from app.services.ai_model_service import AIModelService
-from app.domain.prediction.predict_module import PredictModule
+from app.domain.prediction import PredictModule
 
 prediction_bp = Blueprint('prediction', __name__, url_prefix="/prediction")
 
@@ -37,21 +37,33 @@ def predict():
     try:
         db = get_mongo_database()
         if db is not None:
-            full_prediction_record = data.copy()
-   
-            full_prediction_record["prediction"] = result
-            full_prediction_record["created_at"] = datetime.utcnow()
-            
-            predictions_coll = db.get_collection("predictions")
-            insert_result = predictions_coll.insert_one(full_prediction_record)
-            
+            coll = db.get_collection("predictions")
+            doc = {
+                "Temp": float(data.get("Temp", 0)),
+                "Turbidity": float(data.get("Turbidity", 0)),
+                "DO": float(data.get("DO", 0)),
+                "BOD": float(data.get("BOD", 0)),
+                "CO2": float(data.get("CO2", 0)),
+                "pH": float(data.get("pH", 0)),
+                "Alkalinity": float(data.get("Alkalinity", 0)),
+                "Hardness": float(data.get("Hardness", 0)),
+                "Calcium": float(data.get("Calcium", 0)),
+                "Ammonia": float(data.get("Ammonia", 0)),
+                "Nitrite": float(data.get("Nitrite", 0)),
+                "Phosphorus": float(data.get("Phosphorus", 0)),
+                "H2S": float(data.get("H2S", 0)),
+                "Plankton": float(data.get("Plankton", 0)),
+                "prediction": result,
+                "created_at": datetime.utcnow(),
+            }
+            insert_result = coll.insert_one(doc)
             saved_prediction_id = str(insert_result.inserted_id)
 
+            # Create alert if conditions are met
             wqi_score = result["wqi"]["score"]
             risk_status = result["contamination_risk"]["status"]
             
             if wqi_score < 50 or risk_status in ["High Risk", "Critical"]:
-                
                 actual_sensor_id = data.get("sensorId", "unknown")
 
                 predict_module = PredictModule.create_new(
@@ -61,12 +73,12 @@ def predict():
                     predicted_wqi=f"{result['forecast_24h']['predicted_wqi_range'][0]}-{result['forecast_24h']['predicted_wqi_range'][1]}",
                     confidence=result["forecast_24h"]["confidence_score"],
                     message=f"WQI: {wqi_score}, Risk: {risk_status}",
-                    input_sensor_id=saved_prediction_id,  
-                    id_sensor=actual_sensor_id,           
+                    input_sensor_id=saved_prediction_id,
+                    id_sensor=actual_sensor_id,
                 )
                 
-                coll = db.get_collection("predictModule")
-                doc = {
+                predict_coll = db.get_collection("predict_module")
+                predict_doc = {
                     "wqi_score": predict_module.wqi_score,
                     "contamination_risk": predict_module.contamination_risk,
                     "forecast_24h": predict_module.forecast_24h,
@@ -75,13 +87,13 @@ def predict():
                     "message": predict_module.message,
                     "status": predict_module.status,
                     "time_ago": predict_module.time_ago,
-                    "inputSensorId": predict_module.input_sensor_id, 
+                    "inputSensorId": predict_module.input_sensor_id,
                     "idSensor": predict_module.id_sensor,
                     "is_email_processed": predict_module.is_email_processed,
                     "created_at": predict_module.created_at,
                     "updated_at": predict_module.updated_at,
                 }
-                coll.insert_one(doc)
+                predict_coll.insert_one(predict_doc)
     except Exception as e:
         print(f"Error saving prediction: {e}")
 

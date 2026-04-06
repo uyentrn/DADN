@@ -12,7 +12,7 @@ def get_alerts():
         db = get_mongo_database()
         if db is None:
             return jsonify({"error": "MongoDB not connected"}), 500
-        coll = db.get_collection("predictModule")
+        coll = db.get_collection("predict_module")
         query = {}
         if status == 'unread':
             query['status'] = 'unread'
@@ -49,7 +49,7 @@ def mark_read(alert_id):
         if db is None:
             return jsonify({"error": "MongoDB not connected"}), 500
         from bson import ObjectId
-        coll = db.get_collection("predictModule")
+        coll = db.get_collection("predict_module")
         result = coll.update_one({"_id": ObjectId(alert_id)}, {"$set": {"status": "read"}})
         if result.modified_count > 0:
             return jsonify({"message": "Alert marked as read"})
