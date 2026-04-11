@@ -38,6 +38,7 @@ interface User {
   status: 'Active' | 'Inactive';
   lastActive: string;
 }
+const searchInputStyle = { paddingLeft: '48px', height: '48px', borderRadius: '16px' };
 
 const INITIAL_USERS: User[] = [
   {
@@ -133,10 +134,10 @@ export function Admin() {
       <Header />
       
       <main className="flex-1 max-w-[1600px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex flex-row justify-between items-center gap-4">
           <div>
-            <h2 className="text-cyan-900 text-3xl font-bold flex items-center gap-2">
-              <ShieldAlert className="w-8 h-8 text-cyan-600" />
+            <h2 className="text-cyan-900 text-4xl font-black flex items-center justify-center md:justify-start gap-3">
+              <ShieldAlert className="w-8 h-8 text-cyan-00" />
               User Management
             </h2>
             <p className="text-slate-600 mt-1">Manage system access, roles, and permissions.</p>
@@ -144,7 +145,8 @@ export function Admin() {
           
           <Button 
             onClick={() => handleOpenDialog()} 
-            className="bg-blue-600 hover:bg-blue-700 text-white"
+            style={{ backgroundColor: '#2563eb', color: 'white' }}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-xl flex items-center shadow-md shrink-0"
           >
             <Plus className="w-4 h-4 mr-2" />
             Add New User
@@ -154,10 +156,13 @@ export function Admin() {
         <div className="bg-white/80 backdrop-blur-xl border border-white/40 shadow-xl rounded-2xl overflow-hidden">
           <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4">
             <div className="relative w-full max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <div className="absolute inset-y-0 left-6 flex items-center pointer-events-none">
+                <Search className="w-5 h-5 text-slate-400" />
+              </div>
               <Input 
                 placeholder="Search users by name or email..." 
-                className="pl-9 bg-white/50 border-slate-200"
+                // className="pl-11 h-12 bg-white border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-400"
+                style={searchInputStyle}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -167,12 +172,12 @@ export function Admin() {
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow className="bg-slate-50/50 hover:bg-slate-50/50">
+                <TableRow className="bg-slate-50/80">
                   <TableHead>User</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Last Active</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead className="text-center font-bold">Role</TableHead>
+                  <TableHead className="text-center font-bold">Status</TableHead>
+                  <TableHead className="text-center font-bold">Last Active</TableHead>
+                  <TableHead className="text-center font-bold">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -196,16 +201,25 @@ export function Admin() {
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className={
-                          user.role === 'Admin' ? 'border-purple-200 text-purple-700 bg-purple-50' : 
-                          user.role === 'Analyst' ? 'border-blue-200 text-blue-700 bg-blue-50' : 
-                          'border-slate-200 text-slate-700 bg-slate-50'
-                        }>
-                          {user.role}
-                        </Badge>
+                      <TableCell className="text-center">
+                        {(() => {
+                          const styles = {
+                            Admin: { backgroundColor: '#f3e8ff', color: '#7e22ce', border: '1px solid #e9d5ff' },
+                            Analyst: { backgroundColor: '#dbeafe', color: '#1d4ed8', border: '1px solid #bfdbfe' },
+                            Viewer: { backgroundColor: '#f1f5f9', color: '#475569', border: '1px solid #e2e8f0' },
+                          };
+                          const currentStyle = styles[user.role] || styles.Viewer;
+                          return (
+                            <Badge
+                              style={currentStyle}
+                              className="px-2 py-3 rounded-md font-medium shadow-none rounded-xl"
+                            >
+                              {user.role}
+                            </Badge>
+                          );
+                        })()}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="text-center">
                         <Badge variant="secondary" className={
                           user.status === 'Active' 
                             ? 'bg-green-100 text-green-700 hover:bg-green-100' 
@@ -215,16 +229,16 @@ export function Admin() {
                           {user.status}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-slate-500 text-sm">
+                      <TableCell className="text-center text-slate-500 text-sm">
                         {user.lastActive}
                       </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
+                      <TableCell className="text-center">
+                        <div className="flex justify-center gap-3">
                           <Button 
                             variant="ghost" 
                             size="icon"
                             onClick={() => handleOpenDialog(user)}
-                            className="text-slate-500 hover:text-blue-600 hover:bg-blue-50"
+                            className="text-slate-500 hover:text-blue-600 hover:bg-blue-300"
                           >
                             <Edit2 className="w-4 h-4" />
                           </Button>
@@ -251,7 +265,10 @@ export function Admin() {
 
       {/* User Form Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent 
+          className="sm:max-w-[425px] bg-white text-slate-900 shadow-2xl border border-slate-200"
+          style={{ zIndex: 9999 }}
+        >
           <DialogHeader>
             <DialogTitle>{editingUser ? 'Edit User' : 'Add New User'}</DialogTitle>
             <DialogDescription>
