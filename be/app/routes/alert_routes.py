@@ -25,7 +25,7 @@ def get_alerts():
                 "contamination_risk": d.get("contamination_risk"),
                 "message": d.get("message"),
                 "status": d.get("status"),
-                "time_ago": d.get("time_ago"),
+                "time_ago": calculate_time_ago(d.get("created_at")) if d.get("created_at") else "N/A",
                 "created_at": d.get("created_at").isoformat() if d.get("created_at") else None,
             }
             # Determine level
@@ -57,3 +57,15 @@ def mark_read(alert_id):
             return jsonify({"error": "Alert not found"}), 404
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+def calculate_time_ago(dt):
+    diff = datetime.utcnow() - dt
+    if diff.days > 0:
+        return f"{diff.days} day(s) ago"
+    seconds = diff.seconds
+    if seconds < 60:
+        return "Just now"
+    if seconds < 3600:
+        return f"{seconds // 60} minute(s) ago"
+    return f"{seconds // 3600} hour(s) ago"
