@@ -34,7 +34,7 @@ export function Header() {
                     <div className="flex flex-col items-center gap-2">
                         <button
                             onClick={handleLogout}
-                            className="group flex items-center justify-center bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-red-500/40 transition-all duration-300"
+                            className="group flex items-center justify-center bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-cyan-600/40 transition-all duration-300"
                             style={{
                                 width: '65.4px',
                                 height: '65.4px',

@@ -1,3 +1,4 @@
+@import "tailwindcss";
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 @custom-variant dark (&:is(.dark *));
 
@@ -367,12 +368,8 @@
 
     /* Footer của Login Card */
     .login-footer {
-        align-self: stretch;
         background-color: #f9fafb;
         border-top: 0.7px solid #f3f4f6;
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
         color: #6a7282;
         height: 68.7px;
         padding: 24.7px 32px 0px;

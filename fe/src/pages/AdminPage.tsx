@@ -38,7 +38,6 @@ interface User {
   status: 'Active' | 'Inactive';
   lastActive: string;
 }
-const searchInputStyle = { paddingLeft: '48px', height: '48px', borderRadius: '16px' };
 
 const INITIAL_USERS: User[] = [
   {
@@ -70,11 +69,15 @@ const INITIAL_USERS: User[] = [
 export function Admin() {
   const [users, setUsers] = useState<User[]>(INITIAL_USERS);
   const [searchQuery, setSearchQuery] = useState('');
-  
+
   // Dialog states
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   
+  // Dialog Error
+  const [emailError, setEmailError] = useState("");
+  const [nameError, setNameError] = useState("");
+
   // Form states
   const [formData, setFormData] = useState({
     name: '',
@@ -89,6 +92,8 @@ export function Admin() {
   );
 
   const handleOpenDialog = (user?: User) => {
+    setNameError("");
+    setEmailError("");
     if (user) {
       setEditingUser(user);
       setFormData({
@@ -129,6 +134,53 @@ export function Admin() {
     }
   };
 
+  const validateEmail = (email: string) => {
+    if (email && !email.endsWith("@gmail.com")) {
+      setEmailError("Please enter a valid @gmail.com address.");
+      return false;
+    }
+    setEmailError("");
+    return true;
+  };
+  
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setFormData({ ...formData, name: value });
+    
+    if (nameError) {
+      if (value.trim() !== "") {
+        setNameError("");
+      } else {
+        setNameError("Full Name is required.");
+      }
+    }
+  };
+  
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setFormData({ ...formData, email: value });
+    if (emailError) validateEmail(value);
+  };
+
+  const onSave = () => {
+    const isNameValid = formData.name.trim() !== "";
+    const isEmailValid = validateEmail(formData.email);
+
+    if (!isNameValid) {
+      setNameError("Full Name is required.");
+    } else {
+      setNameError("");
+    }
+
+    if (!isNameValid || !isEmailValid) {
+      return;
+    }
+
+    setNameError("");
+    setEmailError("");
+    handleSaveUser();
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-cyan-50 via-blue-50 to-blue-100 flex flex-col">
       <Header />
@@ -136,8 +188,8 @@ export function Admin() {
       <main className="flex-1 max-w-[1600px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         <div className="flex flex-row justify-between items-center gap-4">
           <div>
-            <h2 className="text-cyan-900 text-4xl font-black flex items-center justify-center md:justify-start gap-3">
-              <ShieldAlert className="w-8 h-8 text-cyan-00" />
+            <h2 className="text-cyan-900 text-3xl font-bold flex items-center gap-3">
+              <ShieldAlert className="w-8 h-8 text-cyan-900" />
               User Management
             </h2>
             <p className="text-slate-600 mt-1">Manage system access, roles, and permissions.</p>
@@ -145,7 +197,6 @@ export function Admin() {
           
           <Button 
             onClick={() => handleOpenDialog()} 
-            style={{ backgroundColor: '#2563eb', color: 'white' }}
             className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-xl flex items-center shadow-md shrink-0"
           >
             <Plus className="w-4 h-4 mr-2" />
@@ -154,15 +205,15 @@ export function Admin() {
         </div>
 
         <div className="bg-white/80 backdrop-blur-xl border border-white/40 shadow-xl rounded-2xl overflow-hidden">
-          <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4">
-            <div className="relative w-full max-w-md">
-              <div className="absolute inset-y-0 left-6 flex items-center pointer-events-none">
+          <div className="p-6 border-b border-slate-100">
+            <div className="relative w-full">
+              <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
                 <Search className="w-5 h-5 text-slate-400" />
               </div>
               <Input 
                 placeholder="Search users by name or email..." 
-                // className="pl-11 h-12 bg-white border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-400"
-                style={searchInputStyle}
+                className="w-full h-12 bg-white border-slate-200 rounded-2xl focus:border-slate-400"
+                style={{ paddingLeft: '2.5rem' }}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -173,7 +224,7 @@ export function Admin() {
             <Table>
               <TableHeader>
                 <TableRow className="bg-slate-50/80">
-                  <TableHead>User</TableHead>
+                  <TableHead className="text-center font-bold">User</TableHead>
                   <TableHead className="text-center font-bold">Role</TableHead>
                   <TableHead className="text-center font-bold">Status</TableHead>
                   <TableHead className="text-center font-bold">Last Active</TableHead>
@@ -191,7 +242,7 @@ export function Admin() {
                   filteredUsers.map((user) => (
                     <TableRow key={user.id} className="hover:bg-slate-50/50">
                       <TableCell>
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-4 ml-5">
                           <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700">
                             <UserCircle className="w-6 h-6" />
                           </div>
@@ -212,7 +263,7 @@ export function Admin() {
                           return (
                             <Badge
                               style={currentStyle}
-                              className="px-2 py-3 rounded-md font-medium shadow-none rounded-xl"
+                              className="px-2 py-1 rounded-md font-medium shadow-none rounded-xl"
                             >
                               {user.role}
                             </Badge>
@@ -222,8 +273,8 @@ export function Admin() {
                       <TableCell className="text-center">
                         <Badge variant="secondary" className={
                           user.status === 'Active' 
-                            ? 'bg-green-100 text-green-700 hover:bg-green-100' 
-                            : 'bg-slate-100 text-slate-700 hover:bg-slate-100'
+                            ? 'bg-green-100 text-green-700 hover:bg-green-100 py-1 rounded-xl border-xl border-green-200' 
+                            : 'bg-slate-100 text-slate-700 hover:bg-slate-100 py-1 rounded-xl border-xl border-slate-200'
                         }>
                           <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${user.status === 'Active' ? 'bg-green-500' : 'bg-slate-400'}`}></span>
                           {user.status}
@@ -238,7 +289,8 @@ export function Admin() {
                             variant="ghost" 
                             size="icon"
                             onClick={() => handleOpenDialog(user)}
-                            className="text-slate-500 hover:text-blue-600 hover:bg-blue-300"
+                            title="Edit"
+                            className="text-slate-500 hover:text-blue-600 hover:bg-blue-100"
                           >
                             <Edit2 className="w-4 h-4" />
                           </Button>
@@ -246,7 +298,8 @@ export function Admin() {
                             variant="ghost" 
                             size="icon"
                             onClick={() => handleDeleteUser(user.id)}
-                            className="text-slate-500 hover:text-red-600 hover:bg-red-50"
+                            title="Remove"
+                            className="text-slate-500 hover:text-red-600 hover:bg-red-100"
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>
@@ -266,8 +319,7 @@ export function Admin() {
       {/* User Form Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent 
-          className="sm:max-w-[425px] bg-white text-slate-900 shadow-2xl border border-slate-200"
-          style={{ zIndex: 9999 }}
+          className="bg-white text-slate-900 shadow-2xl border border-slate-200 rounded-2xl sm:max-w-[768px] w-[95vw]"
         >
           <DialogHeader>
             <DialogTitle>{editingUser ? 'Edit User' : 'Add New User'}</DialogTitle>
@@ -282,11 +334,14 @@ export function Admin() {
             <div className="grid gap-2">
               <Label htmlFor="name">Full Name</Label>
               <Input 
-                id="name" 
+                id="name"
+                className={`rounded-lg ${nameError ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                 value={formData.name}
-                onChange={e => setFormData({...formData, name: e.target.value})}
+                // onChange={e => setFormData({...formData, name: e.target.value})}
+                onChange={handleNameChange}
                 placeholder="e.g. Jane Doe"
               />
+              {nameError && <span className="text-sm text-red-500">{nameError}</span>}
             </div>
             
             <div className="grid gap-2">
@@ -294,10 +349,13 @@ export function Admin() {
               <Input 
                 id="email" 
                 type="email"
+                className={`rounded-lg ${emailError ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                 value={formData.email}
-                onChange={e => setFormData({...formData, email: e.target.value})}
-                placeholder="e.g. jane@waterquality.gov"
+                onChange={handleEmailChange}
+                onBlur={() => validateEmail(formData.email)}
+                placeholder="e.g. jane@gmail.com"
               />
+              {emailError && <span className="text-sm text-red-500">{emailError}</span>}
             </div>
             
             <div className="grid grid-cols-2 gap-4">
@@ -305,7 +363,7 @@ export function Admin() {
                 <Label htmlFor="role">Role</Label>
                 <select 
                   id="role"
-                  className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="rounded-lg flex h-10 w-full items-center justify-between rounded-md border border-input bg-input-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                   value={formData.role}
                   onChange={e => setFormData({...formData, role: e.target.value as User['role']})}
                 >
@@ -319,7 +377,7 @@ export function Admin() {
                 <Label htmlFor="status">Status</Label>
                 <select 
                   id="status"
-                  className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="rounded-lg flex h-10 w-full items-center justify-between rounded-md border border-input bg-input-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                   value={formData.status}
                   onChange={e => setFormData({...formData, status: e.target.value as User['status']})}
                 >
@@ -330,10 +388,22 @@ export function Admin() {
             </div>
           </div>
           
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleSaveUser} className="bg-blue-600 hover:bg-blue-700 text-white">
-              {editingUser ? 'Save Changes' : 'Create User'}
+          <DialogFooter className="flex flex-row justify-end gap-3 mt-6">
+            <Button 
+              variant="outline" 
+              type="button"
+              onClick={() => setIsDialogOpen(false)}
+              className="rounded-xl px-6 bg-slate-100 hover:bg-slate-200 transition-colors"
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="outline" 
+              type="button"x
+              onClick={onSave} 
+              className="rounded-xl px-6 bg-blue-600 text-white hover:bg-blue-700 hover:text-white transition-colors"
+            >
+              Save
             </Button>
           </DialogFooter>
         </DialogContent>
