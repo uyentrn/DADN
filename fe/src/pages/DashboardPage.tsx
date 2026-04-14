@@ -22,7 +22,7 @@ export function Dashboard(){
 			const response = await sensorService.getLatestData();
 			setSensorData(response); 
 		} catch (error) {
-			console.error("Lỗi khi lấy dữ liệu cảm biến:", error);
+			console.error("Error fetching sensor data:", error);
 		} finally {
 			setLoading(false);
 		}
@@ -36,11 +36,11 @@ export function Dashboard(){
 	}, []);
 
 	if (loading && !sensorData) {
-		return <div className="p-6">Đang tải dữ liệu...</div>;
+		return <div className="p-6">Loading sensor data...</div>;
 	}
 
 	if (!sensorData) {
-		return <div className="p-6">Không có dữ liệu cảm biến.</div>;
+		return <div className="p-6">No sensor data available.</div>;
 	}
 
 	return (
@@ -48,7 +48,7 @@ export function Dashboard(){
 			<Header />
 			<main className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 				<section>
-					<h2 className="text-cyan-900 mb-6">
+					<h2 className="text-cyan-900 mb-6 font-medium text-xl">
 						Real-Time Sensor Readings
 					</h2>
 						{/* <PredictTable /> */}
