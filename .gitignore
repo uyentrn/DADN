@@ -200,8 +200,10 @@ cython_debug/
 #  refer to https://docs.cursor.com/context/ignore-files
 
 # Ignore local model assets in backend
-be/mmodelsAI/
 
+# be/modelsAI/
+be/modelsAI/*
+!be/modelsAI/.gitkeep
 
 # Node / Frontend
 node_modules/

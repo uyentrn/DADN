@@ -53,7 +53,7 @@ export function TrendCharts() {
     <section>
       <h2 className="text-cyan-900 mb-6">Trend Analysis</h2>
       
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid md:grid-cols-1 lg:grid-cols-2 gap-6">
         {/* pH vs Time */}
         <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
           <h3 className="text-gray-900 mb-4">pH vs Time</h3>
