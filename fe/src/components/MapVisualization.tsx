@@ -66,7 +66,7 @@ export function MapVisualization() {
   return (
     <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-gray-900">Sensor Network Map</h2>
+        <h2 className="text-gray-900 font-medium">Sensor Network Map</h2>
         <div className="flex items-center gap-2 text-gray-600">
           <Activity className="w-4 h-4" />
           <span className="text-sm">{activeNodesCount} Active Nodes</span>
