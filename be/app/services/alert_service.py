@@ -14,7 +14,7 @@ class AlertService:
         self.email = email
         self.password = password
         self.alert_email_to = alert_email_to
-        self.last_email_time = None  # Track last email sent time
+        self.last_email_time = None  
 
     def check_and_send_alerts(self):
         """Check predict_module for unprocessed alerts and send emails if needed."""
@@ -24,14 +24,42 @@ class AlertService:
             return
 
         coll = db.get_collection("predict_module")
+
         # Find unprocessed predictions
         cursor = coll.find({"is_email_processed": False})
         for doc in cursor:
             if self._should_send_alert(doc):
-                self._send_alert_email(doc)
-                # Update to processed
-                coll.update_one({"_id": doc["_id"]}, {"$set": {"is_email_processed": True}})
-                self.last_email_time = datetime.utcnow()
+                target_email = self.alert_email_to 
+                sensor = None
+                try:
+                    sensor_id = doc.get("id_sensor") or doc.get("input_sensor_id")
+                    if sensor_id:
+                        from bson import ObjectId
+                        
+                        s_id = ObjectId(sensor_id) if isinstance(sensor_id, str) and len(sensor_id) == 24 else sensor_id
+                        sensor = db.get_collection("sensor_informations").find_one({"_id": s_id})
+                        
+                        if sensor and "userId" in sensor:
+                            owner_id = sensor.get("userId")
+                            o_id = ObjectId(owner_id) if isinstance(owner_id, str) and len(owner_id) == 24 else owner_id
+                            user = db.get_collection("users").find_one({"_id": o_id})
+                            
+                            if user and "email" in user:
+                                target_email = user.get("email")
+                except Exception as e:
+                    print(f"Error fetching target email from DB: {e}", flush=True)
+
+                if not target_email:
+                    print(f"There is no valid target email for alert {doc['_id']}.", flush=True)
+                    continue
+
+                success = self._send_alert_email(doc, target_email, sensor)
+                if success:
+                    # Update to processed
+                    coll.update_one({"_id": doc["_id"]}, {"$set": {"is_email_processed": True}})
+                    self.last_email_time = datetime.utcnow()
+                else:
+                    print(f"Failed to send alert email for {doc['_id']}.", flush=True)
 
     def _should_send_alert(self, doc):
         """Determine if an alert should be sent based on prediction data."""
@@ -52,31 +80,34 @@ class AlertService:
                 return time_diff >= timedelta(hours=2)
         return False
 
-    def _send_alert_email(self, doc):
+    def _send_alert_email(self, doc, target_email, sensor):
         """Send alert email."""
-        subject = "Water Quality Alert"
-        body = self._generate_email_body(doc)
+        sensor_name = sensor.get("sensorName", "Unknown") if sensor else "Unknown"
+        subject = f"[URGENT ALERT] Sensor Station {sensor_name} - Contamination Risk!"
+        html_body = self._generate_email_body(doc, sensor)
 
         msg = MIMEMultipart()
         msg['From'] = self.email
-        msg['To'] = self.alert_email_to
+        msg['To'] = target_email
         msg['Subject'] = subject
 
-        msg.attach(MIMEText(body, 'plain'))
+        msg.attach(MIMEText(html_body, 'html'))
 
         try:
             server = smtplib.SMTP(self.smtp_server, self.smtp_port)
             server.starttls()
             server.login(self.email, self.password)
             text = msg.as_string()
-            server.sendmail(self.email, self.alert_email_to, text)
+            server.sendmail(self.email, target_email, text)
             server.quit()
-            print("Alert email sent successfully")
+            print(f"Alert email sent successfully to {target_email}", flush=True)
+            return True
         except Exception as e:
-            print(f"Failed to send email: {e}")
+            print(f"Failed to send email: {e}", flush=True)
+            return False
 
-    def _generate_email_body(self, doc):
-        """Generate email body from prediction data."""
+    def _generate_email_body(self, doc, sensor):
+        """Generate email HTML body from prediction data."""
         wqi_score = doc.get("wqi_score", 0)
         contamination_risk = doc.get("contamination_risk", "")
         forecast_24h = doc.get("forecast_24h", "")
@@ -84,20 +115,145 @@ class AlertService:
         confidence = doc.get("confidence", 0)
         message = doc.get("message", "")
 
-        body = f"""
-        Water Quality Alert
+        # Sensor info
+        sensor_id = doc.get("id_sensor") or doc.get("input_sensor_id") or "No ID"
+        sensor_name = sensor.get("sensorName", "Unknown") if sensor else "Unknown"
+        
+        # Parse location details
+        lat, lon = "N/A", "N/A"
+        if sensor and "location" in sensor and isinstance(sensor["location"], dict):
+            lat = sensor["location"].get("lat", "N/A")
+            lon = sensor["location"].get("lng", "N/A")
 
-        Current Status:
-        - WQI Score: {wqi_score}
-        - Contamination Risk: {contamination_risk}
-        - 24h Forecast: {forecast_24h}
-        - Predicted WQI Range: {predicted_wqi}
-        - Confidence: {confidence}%
+        html_body = f"""
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-width=1.0">
+            <style>
+                body {{
+                    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+                    background-color: #f9f9f9;
+                    margin: 0;
+                    padding: 0;
+                    color: #333333;
+                }}
+                .container {{
+                    max-width: 600px;
+                    margin: 40px auto;
+                    background-color: #ffffff;
+                    border-radius: 8px;
+                    overflow: hidden;
+                    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+                }}
+                .header {{
+                    text-align: center;
+                    padding: 30px 20px;
+                    border-bottom: 1px solid #eeeeee;
+                }}
+                .header h1 {{
+                    margin: 0;
+                    font-size: 24px;
+                    color: #111111;
+                    letter-spacing: -0.5px;
+                }}
+                .content {{
+                    padding: 30px 40px;
+                    line-height: 1.5;
+                    font-size: 14px;
+                }}
+                .content p {{
+                    margin: 0 0 15px 0;
+                }}
+                .grey-box {{
+                    background-color: #f4f4f5;
+                    border-radius: 6px;
+                    padding: 20px;
+                    margin: 20px 0;
+                    font-size: 14px;
+                }}
+                .grey-box ul {{
+                    list-style-type: none;
+                    padding: 0;
+                    margin: 0;
+                }}
+                .grey-box li {{
+                    margin-bottom: 12px;
+                    border-bottom: 1px solid #eaeaea;
+                    padding-bottom: 8px;
+                }}
+                .grey-box li:last-child {{
+                    border-bottom: none;
+                    margin-bottom: 0;
+                    padding-bottom: 0;
+                }}
+                .grey-box strong {{
+                    color: #222222;
+                    display: inline-block;
+                    width: 140px;
+                }}
+                .text-danger {{
+                    color: #d93025;
+                    font-weight: 600;
+                }}
+                .text-warning {{
+                    color: #f29900;
+                    font-weight: 600;
+                }}
+                .signature {{
+                    margin-top: 30px;
+                }}
+                .footer {{
+                    text-align: center;
+                    padding: 20px;
+                    background-color: #f9f9f9;
+                    font-size: 12px;
+                    color: #888888;
+                    border-top: 1px solid #eeeeee;
+                }}
+                .footer a {{
+                    color: #1a73e8;
+                    text-decoration: none;
+                }}
+                .footer a:hover {{
+                    text-decoration: underline;
+                }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>WAS Alert System</h1>
+                </div>
+                <div class="content">
+                    <p>Hello,</p>
+                    <p>The WAS (Water Alert System) has detected critical water quality parameters at your station. Our AI engine indicates that immediate attention is required.</p>
+                    
+                    <div class="grey-box">
+                        <ul>
+                            <li><strong>Station Name:</strong> {sensor_name}</li>
+                            <li><strong>Location (Lat, Lng):</strong> {lat}, {lon}</li>
+                            <li><strong>Sensor ID:</strong> {sensor_id}</li>
+                            <li><strong>Diagnosis:</strong> {message}</li>
+                            <li><strong>WQI Score:</strong> <span class="text-danger">{wqi_score}</span></li>
+                            <li><strong>Contamination Risk:</strong> <span class="text-danger">{contamination_risk}</span></li>
+                            <li><strong>24h Forecast:</strong> {forecast_24h} (Predicted WQI: {predicted_wqi})</li>
+                        </ul>
+                    </div>
 
-        Message: {message}
-
-        Please take immediate action if necessary.
-
-        This is an automated alert from the Water Quality Monitoring System.
+                    <p>Please inspect your water system immediately and take necessary emergency measures to prevent potential damage.</p>
+                    
+                    <div class="signature">
+                        <p>Best,<br>
+                        <strong>The WAS team</strong></p>
+                    </div>
+                </div>
+                <div class="footer">
+                    <p>If you have any questions please review the detailed report via the <a href="#">WAS System Dashboard</a>.</p>
+                </div>
+            </div>
+        </body>
+        </html>
         """
-        return body.strip()
+        return html_body
