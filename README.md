@@ -21,22 +21,18 @@ Dự án hệ thống giám sát chất lượng nước sử dụng trí tuệ 
 ### Backend
 
 1. Di chuyển vào thư mục backend:
+    git bash (python 3.12.4)
     ```
     cd be
-    ```
-2. Cài đặt dependencies:
-    ```
+    python -m venv .venv
+    source .venv/Scripts/activate
     pip install -r requirements.txt
-    ```
-3. Khởi chạy server:
-
-    ```
     python run.py
-    ```
 
-    Server sẽ chạy trên `http://127.0.0.1:5000`.
+    ```
 
 4. Xem db
+    Server sẽ chạy trên `http://127.0.0.1:5000`.
     ```
     python check_db.py
     ```
