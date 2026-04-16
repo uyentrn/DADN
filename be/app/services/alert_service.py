@@ -122,8 +122,8 @@ class AlertService:
         # Parse location details
         lat, lon = "N/A", "N/A"
         if sensor and "location" in sensor and isinstance(sensor["location"], dict):
-            lat = sensor["location"].get("lat", "N/A")
-            lon = sensor["location"].get("lng", "N/A")
+            lat = sensor["location"].get("latitude", "N/A")
+            lon = sensor["location"].get("longitude", "N/A")
 
         html_body = f"""
         <!DOCTYPE html>
