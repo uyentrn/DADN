@@ -45,8 +45,12 @@ def create_app():
     scheduler.start()
 
     sensor_health = SensorHealthService()
+    def sensor_health_task():
+        with app.app_context():
+            sensor_health.mark_offline_sensors()
+
     scheduler.add_job(
-        func=sensor_health.mark_offline_sensors,
+        func=sensor_health_task,
         trigger="interval",
         minutes=10,
         id="sensor_health_check",

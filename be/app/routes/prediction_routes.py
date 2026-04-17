@@ -71,8 +71,10 @@ def predict():
             saved_prediction_id = str(insert_result.inserted_id)
 
             # Create alert if conditions are met
-            wqi_score = result["wqi"]["score"]
-            risk_status = result["contamination_risk"]["status"]
+            summary = result["summary"]
+
+            wqi_score = summary["wqi"]["score"]
+            risk_status = summary["risk"]["status"]
             
             if wqi_score < 50 or risk_status in ["High Risk", "Critical"]:
                 actual_sensor_id = data.get("sensorId", "unknown")
@@ -80,9 +82,9 @@ def predict():
                 predict_module = PredictModule.create_new(
                     wqi_score=wqi_score,
                     contamination_risk=risk_status,
-                    forecast_24h=result["forecast_24h"]["trend"],
-                    predicted_wqi=f"{result['forecast_24h']['predicted_wqi_range'][0]}-{result['forecast_24h']['predicted_wqi_range'][1]}",
-                    confidence=result["forecast_24h"]["confidence_score"],
+                    forecast_24h=summary["forecast_24h"]["trend"],
+                    predicted_wqi=f"{summary['forecast_24h']['predicted_wqi_range'][0]}-{summary['forecast_24h']['predicted_wqi_range'][1]}",
+                    confidence=summary["forecast_24h"]["confidence_score"],
                     message=f"WQI: {wqi_score}, Risk: {risk_status}",
                     input_sensor_id=saved_prediction_id,
                     id_sensor=actual_sensor_id,
@@ -107,7 +109,6 @@ def predict():
                 predict_coll.insert_one(predict_doc)
     except Exception as e:
         print(f"Error saving prediction: {e}")
-
     return jsonify(result)
 
 @prediction_bp.route('/history', methods=['GET'])
