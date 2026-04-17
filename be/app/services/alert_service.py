@@ -3,6 +3,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime, timedelta
 import time
+from bson import ObjectId
 
 from app.infrastructure.persistence.mongo.connection import get_mongo_database
 
@@ -34,8 +35,6 @@ class AlertService:
                 try:
                     sensor_id = doc.get("id_sensor") or doc.get("input_sensor_id")
                     if sensor_id:
-                        from bson import ObjectId
-                        
                         s_id = ObjectId(sensor_id) if isinstance(sensor_id, str) and len(sensor_id) == 24 else sensor_id
                         sensor = db.get_collection("sensor_informations").find_one({"_id": s_id})
                         
@@ -257,3 +256,130 @@ class AlertService:
         </html>
         """
         return html_body
+
+    def send_sensor_error_alert(self, sensor_id: str, error_type: str = "ERROR") -> bool:
+        """
+        Send an alert email when a sensor error (all data is 0) or disconnection (offline) is detected.
+        
+        Args:
+            sensor_id (str): ID of the faulty sensor.
+            error_type (str): Type of error, e.g., 'ERROR' or 'OFFLINE'.
+        
+        Returns:
+            bool: True if the email was sent successfully, otherwise False.
+        """
+        db = get_mongo_database()
+        if db is None:
+            print("MongoDB not connected. Cannot send sensor error email.")
+            return False
+
+        try:
+            s_id = ObjectId(sensor_id) if isinstance(sensor_id, str) and len(sensor_id) == 24 else sensor_id
+            sensor = db.get_collection("sensor_informations").find_one({"_id": s_id})
+            
+            target_email = self.alert_email_to
+            if sensor and "userId" in sensor:
+                owner_id = sensor.get("userId")
+                o_id = ObjectId(owner_id) if isinstance(owner_id, str) and len(owner_id) == 24 else owner_id
+                user = db.get_collection("users").find_one({"_id": o_id})
+                
+                if user and "email" in user:
+                    target_email = user.get("email")
+            
+            if not target_email:
+                print(f"No linked email found to notify sensor error (Sensor: {sensor_id}).", flush=True)
+                return False
+
+            sensor_name = sensor.get("sensorName", "Unknown") if sensor else "Unknown"
+            
+            # Initialize Subject
+            subject = f"[{error_type.upper()} ALERT] Sensor Station {sensor_name} is facing an issue!"
+            html_body = self._generate_sensor_error_email_body(sensor_id, sensor, error_type)
+
+            msg = MIMEMultipart()
+            msg['From'] = self.email
+            msg['To'] = target_email
+            msg['Subject'] = subject
+
+            msg.attach(MIMEText(html_body, 'html'))
+
+            server = smtplib.SMTP(self.smtp_server, self.smtp_port)
+            server.starttls()
+            server.login(self.email, self.password)
+            text = msg.as_string()
+            server.sendmail(self.email, target_email, text)
+            server.quit()
+            print(f"Sent {error_type} alert email for sensor to {target_email}", flush=True)
+            return True
+
+        except Exception as e:
+            print(f"Failed to send sensor alert email: {e}", flush=True)
+            return False
+
+    def _generate_sensor_error_email_body(self, sensor_id, sensor, error_type):
+        """Generate HTML body for hardware error or disconnection alert email."""
+        sensor_name = sensor.get("sensorName", "Unknown") if sensor else "Unknown"
+        lat, lon = "N/A", "N/A"
+        if sensor and "location" in sensor and isinstance(sensor["location"], dict):
+            lat = sensor["location"].get("latitude", "N/A")
+            lon = sensor["location"].get("longitude", "N/A")
+
+        if error_type == "ERROR":
+            error_description = "The sensor is sending invalid data (all parameters are 0). This may be due to a hardware failure or a short circuit."
+        else:
+            error_description = "The sensor station has stopped sending data to the system for a long time (Disconnected). This could be due to low battery, power outage, or network configuration loss."
+
+        return f"""
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-width=1.0">
+            <style>
+                body {{
+                    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+                    background-color: #f9f9f9;
+                    margin: 0; padding: 0; color: #333;
+                }}
+                .container {{
+                    max-width: 600px; margin: 40px auto; background-color: #fff;
+                    border-radius: 8px; padding: 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+                }}
+                .header {{ border-bottom: 1px solid #eee; padding-bottom: 20px; text-align: center; }}
+                .header h1 {{ color: #d93025; margin: 0; font-size: 24px; }}
+                .content {{ padding: 20px 0; line-height: 1.6; font-size: 15px; }}
+                .box {{
+                    background-color: #f4f4f5; border-radius: 6px; padding: 20px; margin: 20px 0;
+                }}
+                .box ul {{ padding: 0; margin: 0; list-style: none; }}
+                .box li {{ padding: 10px 0; border-bottom: 1px solid #eaeaea; }}
+                .box li:last-child {{ border-bottom: none; }}
+                .box strong {{ display: inline-block; width: 140px; color: #222; }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>Sensor Issue Detected</h1>
+                </div>
+                <div class="content">
+                    <p>Hello,</p>
+                    <p>The WAS has detected an issue with one of your sensor stations.</p>
+                    <p><strong>Issue Type: <span style="color: #d93025;">{error_type}</span></strong></p>
+                    <p>{error_description}</p>
+                    
+                    <div class="box">
+                        <ul>
+                            <li><strong>Station Name:</strong> {sensor_name}</li>
+                            <li><strong>Station ID:</strong> {sensor_id}</li>
+                            <li><strong>Location (Lat, Lng):</strong> {lat}, {lon}</li>
+                        </ul>
+                    </div>
+
+                    <p>Please inspect the hardware or power supply of the sensor station immediately to resolve the issue.</p>
+                    <p>Best regards,<br><strong>The WAS Operations Team</strong></p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
