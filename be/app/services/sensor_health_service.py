@@ -87,7 +87,6 @@ class SensorHealthService:
             return
  
         threshold = datetime.now(timezone.utc) - timedelta(minutes=OFFLINE_THRESHOLD_MINUTES)
- 
         try:
             result = db["sensor_informations"].update_many(
                 {
