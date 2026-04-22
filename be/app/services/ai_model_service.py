@@ -110,6 +110,51 @@ class AIModelService:
 		with open(os.path.join(self.MODEL_DIR, "metadata.json"), "w") as f:
 			json.dump(metadata, f, indent=2)
 
+		# =====================================================================
+		# [BỔ SUNG: TẠO HỒ SƠ NƯỚC CHUẨN TỪ MODEL TỐT NHẤT]
+		# =====================================================================
+		try:
+			# 1. Tìm model có accuracy cao nhất trong dict metadata
+			best_model_name = max(metadata, key=lambda k: metadata[k]["accuracy"])
+			best_model = models[best_model_name]
+			
+			# 2. Xác định index của nhãn Tốt (Hỗ trợ nhãn là 0, 1 hoặc Excellent, Good)
+			classes = list(best_model.classes_)
+			good_indices = [i for i, c in enumerate(classes) if str(c) in ["0", "1", "Excellent", "Good"]]
+
+			if good_indices:
+				# 3. Lấy xác suất dự đoán (Dùng X_scaled hoặc X tùy vào cấu hình model)
+				if metadata[best_model_name]["use_scaler"]:
+					probs = best_model.predict_proba(X_scaled)
+				else:
+					probs = best_model.predict_proba(X)
+				
+				# 4. Tính tổng xác suất và lọc các mẫu model tốt (>= 85%)
+				good_probs = np.sum(probs[:, good_indices], axis=1)
+				certified_indices = np.where(good_probs >= 0.85)[0]
+				certified_df = X.iloc[certified_indices]
+				
+				# 5. Tính Tứ phân vị (5% - 95%) để tạo vùng an toàn chuẩn
+				if not certified_df.empty:
+					good_profile = {}
+					for col in FEATURE_COLUMNS:
+						good_profile[col] = {
+							"mean": round(float(certified_df[col].mean()), 2),
+							"min_safe": round(float(certified_df[col].quantile(0.05)), 2),
+							"max_safe": round(float(certified_df[col].quantile(0.95)), 2)
+						}
+					
+					profile_path = os.path.join(self.MODEL_DIR, "good_water_profile.json")
+					with open(profile_path, "w", encoding="utf-8") as f:
+						json.dump(good_profile, f, indent=4)
+					print(f"Đã tạo good_water_profile.json từ model {best_model_name} với {len(certified_df)} mẫu.")
+		except Exception as e:
+			print(f"Lỗi khi tạo good_water_profile: {e}")
+
+		# =====================================================================
+		# [BỔ SUNG: TẠO HỒ SƠ NƯỚC CHUẨN TỪ MODEL TỐT NHẤT]
+		# =====================================================================	
+
 		self.metadata = metadata
 		self.load_models()
 

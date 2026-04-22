@@ -7,11 +7,14 @@ from app.infrastructure.persistence.mongo.connection import get_mongo_database
 from app.services.ai_model_service import AIModelService
 from app.domain.prediction import PredictModule
 from app.services.sensor_health_service import SensorHealthService
+from app.services.solution_ai_service import SolutionAIService
+from app.infrastructure.external.weather_service import get_weather_data
 
 prediction_bp = Blueprint('prediction', __name__, url_prefix="/prediction")
 
 ai_service = AIModelService()
 sensor_health = SensorHealthService()
+solution_service = SolutionAIService()
 
 @prediction_bp.route('/test-db', methods=['GET'])
 def test_db():
@@ -44,6 +47,31 @@ def predict():
             }), 400
 
     result = ai_service.predict(data)
+
+    # =======================================================
+    # SOLUTION AI - TÍCH HỢP GIẢI PHÁP TỪ GEMINI
+    # =======================================================
+    try:
+        # Lấy thời tiết (Mặc định tọa độ HCM) - TỐT NHẤT NÊN LẤY THEO KINH ĐỘ VÀ VĨ ĐỘ CỦA SENSOR
+        weather_info = get_weather_data(10.8231, 106.6297)
+        
+        # Sinh giải pháp
+        final_solution = solution_service.generate_advanced_solution(
+            sensor_data=data,
+            ai_prediction_result=result,
+            weather_data=weather_info
+        )
+        
+        result['solution'] = final_solution 
+        result['weather_forecast'] = weather_info
+        
+    except Exception as e:
+        print(f"Lỗi phần Solution AI: {e}")
+        result['solution'] = "Hệ thống đang phân tích dữ liệu..."
+
+    # =======================================================
+    # SOLUTION AI - TÍCH HỢP GIẢI PHÁP TỪ GEMINI
+    # =======================================================
 
     try:
         db = get_mongo_database()
