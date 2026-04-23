@@ -68,9 +68,15 @@ class AIModelService:
 		X = df[FEATURE_COLUMNS]
 		y = df["Water Quality"]
 
+		# ===== SPLIT DATA =====
+		X_train, X_test, y_train, y_test = train_test_split(
+			X, y, test_size=0.2, random_state=42, stratify=y
+		)
+
 		# ===== SCALER =====
 		scaler = StandardScaler()
-		X_scaled = scaler.fit_transform(X)
+		X_train_scaled = scaler.fit_transform(X_train)
+		X_test_scaled = scaler.transform(X_test)
 
 		scaler_path = os.path.join(self.MODEL_DIR, "scaler.pkl")
 		joblib.dump(scaler, scaler_path)
@@ -86,17 +92,16 @@ class AIModelService:
 		metadata = {}
 
 		for name, model in models.items():
-
 			if name in ["LogisticRegression", "SVM", "KNN"]:
-				model.fit(X_scaled, y)
-				preds = model.predict(X_scaled)
+				model.fit(X_train_scaled, y_train)
+				preds = model.predict(X_test_scaled)
 				use_scaler = True
 			else:
-				model.fit(X, y)
-				preds = model.predict(X)
+				model.fit(X_train, y_train)
+				preds = model.predict(X_test)
 				use_scaler = False
 
-			acc = accuracy_score(y, preds)
+			acc = accuracy_score(y_test, preds)
 
 			path = os.path.join(self.MODEL_DIR, f"{name}.pkl")
 			joblib.dump(model, path)
