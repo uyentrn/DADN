@@ -9,17 +9,21 @@ from app.infrastructure.persistence.mongo.connection import get_mongo_database
 
 
 class AlertService:
-    def __init__(self, smtp_server, smtp_port, email, password):
+    def __init__(self, smtp_server, smtp_port, email, password, enabled=True):
         self.smtp_server = smtp_server
         self.smtp_port = smtp_port
         self.email = email
         self.password = password
+        self.enabled = enabled
         self.last_email_time = None  
         self.last_sensor_error_time = {}  # Lưu thời gian gửi mail lỗi cuối cùng của từng sensor
 
 
     def check_and_send_alerts(self):
         """Check predict_module for unprocessed alerts and send emails if needed."""
+        if not self.enabled:
+            return
+
         db = get_mongo_database()
         if db is None:
             print("MongoDB not connected")
@@ -50,7 +54,10 @@ class AlertService:
                     print(f"Error fetching target email from DB: {e}", flush=True)
 
                 if not target_email:
-                    print(f"There is no valid target email for alert {doc['_id']}.", flush=True)
+                    coll.update_one(
+                        {"_id": doc["_id"]},
+                        {"$set": {"is_email_processed": True}},
+                    )
                     continue
 
                 success = self._send_alert_email(doc, target_email, sensor)
@@ -275,6 +282,9 @@ class AlertService:
         Returns:
             bool: True if the email was sent successfully, otherwise False.
         """
+        if not self.enabled:
+            return False
+
         db = get_mongo_database()
         if db is None:
             print("MongoDB not connected. Cannot send sensor error email.")
