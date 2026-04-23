@@ -45,8 +45,20 @@ def create_app():
         with app.app_context():
             alert_service.check_and_send_alerts()
 
-    scheduler = BackgroundScheduler()
-    scheduler.add_job(func=scheduled_task, trigger="interval", minutes=1)
+    scheduler = BackgroundScheduler(
+        job_defaults={
+            "coalesce": True,
+            "max_instances": 1,
+            "misfire_grace_time": 300,
+        }
+    )
+    scheduler.add_job(
+        func=scheduled_task,
+        trigger="interval",
+        minutes=1,
+        id="alert_check",
+        replace_existing=True,
+    )
     scheduler.start()
 
     sensor_health = SensorHealthService()
@@ -59,6 +71,7 @@ def create_app():
         trigger="interval",
         minutes=10,
         id="sensor_health_check",
+        replace_existing=True,
     )
 
     @app.route("/")
