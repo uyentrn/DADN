@@ -7,7 +7,7 @@ from app.infrastructure.persistence.mongo.connection import get_mongo_database
 from app.infrastructure.persistence.mongo.object_id import parse_object_id
  
 # Ngưỡng thời gian: sensor không gửi data quá 15 phút → OFFLINE
-OFFLINE_THRESHOLD_MINUTES = 15
+OFFLINE_THRESHOLD_MINUTES = 60*24
  
 SENSOR_FIELDS = [
     "Temp", "Turbidity", "DO", "BOD", "CO2", "pH",
