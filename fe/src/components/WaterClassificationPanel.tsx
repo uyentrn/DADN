@@ -1,4 +1,5 @@
 import { useState, useEffect} from 'react';
+import { Layers, ListChecks, Filter} from 'lucide-react';
 import { sensorService } from '../services/api';
 
 export function WaterClassificationPanel() {
@@ -10,12 +11,10 @@ export function WaterClassificationPanel() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        // Gọi API thực tế
         const res = await sensorService.getAIClassification();
         setData(res);
       } catch (err) {
         console.error("Error fetching sensor data:", err);
-        // setError(err);
       } finally {
         setLoading(false);
       }
@@ -51,13 +50,20 @@ export function WaterClassificationPanel() {
 
   return (
     <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
-      <h3 className="text-gray-900 mb-6 font-medium">Water Classification</h3>
+      <div className="flex items-center justify-between mb-6">
+				<div className="flex items-center gap-3">
+          <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl p-3 shadow-md">
+            <Filter className="w-6 h-6 text-white" />
+          </div>
+          <h2 className="text-gray-900 font-medium">Water Classification</h2>
+        </div>
+			</div>
       
       <div className="space-y-10">
         {/* Hard Water vs Soft Water */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-gray-600 font-medium">Water Type</span>
+            <span className="text-gray-900 font-medium">Water Type</span>
             <span className={`${data.hardness?.category === "Hard Water" ? "text-blue-600" : "text-cyan-600"}`}>
               {data.hardness?.category || "Unknown"}
             </span>
@@ -85,7 +91,7 @@ export function WaterClassificationPanel() {
         {/* Alkalinity Level Meter */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-gray-600 font-medium">Alkalinity Level</span>
+            <span className="text-gray-900 font-medium">Alkalinity Level</span>
             <span className="text-blue-600">{data.alkalinity?.level}</span>
           </div>
           <div className="relative h-8 bg-gray-100 rounded-full overflow-hidden">
@@ -108,7 +114,7 @@ export function WaterClassificationPanel() {
         {/* Temperature Level Meter */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-gray-600 font-medium">Temperature Level</span>
+            <span className="text-gray-900 font-medium">Temperature Level</span>
             <span className={data.temperature?.status === "Safe" ? "text-green-600" : "text-red-600"}>
               {data.temperature?.status}
             </span>

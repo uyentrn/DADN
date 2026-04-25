@@ -9,7 +9,7 @@ import { MapVisualization } from '../components/MapVisualization';
 import { AlertsPanel } from '../components/AlertsPanel';
 import { SystemArchitecture } from '../components/SystemArchitecture';
 import { Footer } from '../components/Footer';
-import { Droplet, Thermometer, Zap, Eye, Wind, Waves } from 'lucide-react';
+import { Droplet, Thermometer, Eye, Wind, Waves, Biohazard } from 'lucide-react';
 
 // Main Page (Dashboard)
 export function Dashboard(){
@@ -93,24 +93,24 @@ export function Dashboard(){
 								iconColor="text-orange-500"
 							/>
 							<SensorCard
-								icon={<Zap className="w-8 h-8" />}
-								title="Conductivity"
-								value={sensorData.conductivity?.value || "0"}
-								unit="µS/cm"
-								range="0–2000"
+								icon={<Biohazard className="w-8 h-8" />}
+								title="Ammonia"
+								value={sensorData.sensor_data.Ammonia.toFixed(2)}
+								unit="mg/L"
+								range="0–5"
 								status={
-									sensorData.sensor_data.Conductivity <= 1000 ? "Low Salinity" : 
-									sensorData.sensor_data.Conductivity <= 1500 ? "Moderate" : "High Mineral"
+									sensorData.sensor_data.Ammonia <= 0.1 ? "Safe" : 
+									sensorData.sensor_data.Ammonia <= 1.0 ? "Warning" : "Toxic"
 								}
 								statusColor={
-									sensorData.sensor_data.Conductivity <= 1000 ? "text-green-500" : 
-									sensorData.sensor_data.Conductivity <= 1500 ? "text-yellow-500" : "text-red-500"
+									sensorData.sensor_data.Ammonia <= 0.1 ? "text-green-500" : 
+									sensorData.sensor_data.Ammonia <= 1.0 ? "text-yellow-500" : "text-red-500"
 								}
 								bgColor={
-									sensorData.sensor_data.Conductivity <= 1000 ? "bg-green-50" : 
-									sensorData.sensor_data.Conductivity <= 1500 ? "bg-yellow-50" : "bg-red-50"
+									sensorData.sensor_data.Ammonia <= 0.1 ? "bg-green-50" : 
+									sensorData.sensor_data.Ammonia <= 1.0 ? "bg-yellow-50" : "bg-red-50"
 								}
-								iconColor="text-yellow-500"
+								iconColor="text-purple-500"
 							/>
 							<SensorCard
 								icon={<Eye className="w-8 h-8" />}
@@ -159,16 +159,16 @@ export function Dashboard(){
 								unit="mg L⁻¹"
 								range="0–1000"
 								status={
-									sensorData.sensor_data.Hardness >= 50 && sensorData.sensor_data.Hardness <= 150 ? "Soft Water" : 
-									sensorData.sensor_data.Hardness > 150 && sensorData.sensor_data.Hardness <= 300 ? "Hard Water" : "Very Hard"
+									sensorData.sensor_data.Hardness >= 0 && sensorData.sensor_data.Hardness <= 75 ? "Soft" : 
+									sensorData.sensor_data.Hardness > 75 && sensorData.sensor_data.Hardness <= 150 ? "Moderately Hard" : "Hard"
 								}
 								statusColor={
-									sensorData.sensor_data.Hardness >= 50 && sensorData.sensor_data.Hardness <= 150 ? "text-green-500" : 
-									sensorData.sensor_data.Hardness > 150 && sensorData.sensor_data.Hardness <= 300 ? "text-yellow-500" : "text-red-500"
+									sensorData.sensor_data.Hardness >= 0 && sensorData.sensor_data.Hardness <= 75 ? "text-green-500" : 
+									sensorData.sensor_data.Hardness > 75 && sensorData.sensor_data.Hardness <= 150 ? "text-yellow-500" : "text-red-500"
 								}
 								bgColor={
-									sensorData.sensor_data.Hardness >= 50 && sensorData.sensor_data.Hardness <= 150 ? "bg-green-50" : 
-									sensorData.sensor_data.Hardness > 150 && sensorData.sensor_data.Hardness <= 300 ? "bg-yellow-50" : "bg-red-50"
+									sensorData.sensor_data.Hardness >= 0 && sensorData.sensor_data.Hardness <= 75 ? "bg-green-50" : 
+									sensorData.sensor_data.Hardness > 75 && sensorData.sensor_data.Hardness <= 150 ? "bg-yellow-50" : "bg-red-50"
 								}
 								iconColor="text-indigo-500"
 							/>

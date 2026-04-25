@@ -29,7 +29,6 @@ def create_app():
     app.register_blueprint(analytics_bp)
     app.register_blueprint(prediction_bp)
     app.register_blueprint(alert_bp)
-    app.register_blueprint(sensor_data_bp)
     
     # Start alert service scheduler
     alert_service = AlertService(
