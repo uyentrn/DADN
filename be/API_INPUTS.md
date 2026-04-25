@@ -98,6 +98,37 @@ Auth: required.
 
 Input: none.
 
+### PATCH /auth/password
+
+Auth: required.
+
+Content-Type:
+
+```http
+Content-Type: application/json
+```
+
+Body:
+
+```json
+{
+  "currentPassword": "secret",
+  "newPassword": "new-secret"
+}
+```
+
+Fields:
+
+| Field | Required | Type | Notes |
+| --- | --- | --- | --- |
+| `currentPassword` | yes | string | Must match the current password of the authenticated user. |
+| `newPassword` | yes | string | Must not be empty. |
+
+Notes:
+
+- `userId` is taken from JWT.
+- Do not pass `userId` in body or query params.
+
 ### GET /auth/users
 
 Auth: required, admin only.
