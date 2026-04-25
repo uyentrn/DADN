@@ -175,5 +175,18 @@ export const alertService = {
 	markAsRead: async (alertId: string) => {
 		const res = await api.put(`/api/v1/alerts/${alertId}/read`);
 		return res.data;
-	}
+	},
+
+	// BẬT chế độ tự động gửi mail cảnh báo 
+	TurnOnMailAlert: async () => {
+		const res = await api.get(`/api/v1/alerts/settings/email`);
+		return res.data;
+	},
+
+	// TẮT chế độ tự động gửi mail cảnh báo
+	TurnOffMailAlert: async () => {
+		const res = await api.put(`/api/v1/alerts/settings/email`);
+		return res.data;
+	},
+
 };

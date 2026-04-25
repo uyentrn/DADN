@@ -54,7 +54,7 @@ export function LoginPage() {
 
       if (role === 'ADMIN') {
         navigate('/admin');
-      } else if (role === 'MANAGER') {
+      } else if (role === 'USER') {
         navigate('/');
       } else {
         setPasswordError('Wrong password');

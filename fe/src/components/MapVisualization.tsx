@@ -154,16 +154,16 @@ export function MapVisualization() {
       <div className="flex items-center justify-center gap-6 mt-6 pt-6 border-t border-gray-100">
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-          <span className="text-sm text-gray-600">Online (Healthy)</span>
+          <span className="text-sm text-gray-600">Online</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-          <span className="text-sm text-gray-600">Offline (Critical)</span>
+          <span className="text-sm text-gray-600">Offline</span>
         </div>
-        <div className="flex items-center gap-2">
+        {/* <div className="flex items-center gap-2">
           <div className="w-4 h-4 bg-red-500 rounded-full opacity-30"></div>
           <span className="text-sm text-gray-600">Contamination Zone</span>
-        </div>
+        </div> */}
       </div>
     </div>
   );

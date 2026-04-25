@@ -43,33 +43,6 @@ interface User {
   lastActive?: string;
 }
 
-// const INITIAL_USERS: User[] = [
-//   {
-//     id: '1',
-//     name: 'Sarah Jenkins',
-//     email: 'sarah.j@waterquality.gov',
-//     role: 'ADMIN',
-//     status: 'Active',
-//     lastActive: 'Just now',
-//   },
-//   {
-//     id: '2',
-//     name: 'Michael Chang',
-//     email: 'm.chang@waterquality.gov',
-//     role: 'Analyst',
-//     status: 'Active',
-//     lastActive: '2 hours ago',
-//   },
-//   {
-//     id: '3',
-//     name: 'Elena Rodriguez',
-//     email: 'elena.r@waterquality.gov',
-//     role: 'Viewer',
-//     status: 'Inactive',
-//     lastActive: '3 days ago',
-//   },
-// ];
-
 export function Admin() {
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true); 
