@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Droplets, LogOut, Settings, Key, XCircle, Loader2, Save, Eye, EyeOff } from 'lucide-react';
+import { Droplets, LogOut, Settings, Key, XCircle, Loader2, Save, Eye, EyeOff, ShieldAlert } from 'lucide-react';
 import { authService } from '../services/authService';
 
 export function Header() {
 	// const navigate = useNavigate();
+	const userRole = authService.getUserRole();
+
 	const [showCurrentPass, setShowCurrentPass] = useState(false);
 	const [showNewPass, setShowNewPass] = useState(false);
 	// State quản lý dropdown và modal
@@ -13,12 +15,12 @@ export function Header() {
 	
 	// State cho form đổi mật khẩu
 	const [passwords, setPasswords] = useState({ current: '', new: '' });
+	const [curPassError, setCurPassError] = useState('');
 	const [isSaving, setIsSaving] = useState(false);
 
 	const handleLogout = async () => {
 		try {
 			await authService.logout();
-			// navigate('/login'); // Chuyển hướng sau khi logout thành công
 		} catch (error) {
 			console.error("Logout failed in component:", error);
 		}
@@ -28,14 +30,18 @@ export function Header() {
 		e.preventDefault();
 		setIsSaving(true);
 		try {
-			// Giả lập gọi API đổi mật khẩu
-			console.log("Changing password...", passwords);
-			await new Promise(resolve => setTimeout(resolve, 1500));
+			await authService.changePassword({
+				currentPassword: passwords.current, 
+				newPassword: passwords.new
+			});
+
 			alert("Password changed successfully!");
-			setIsChangePassOpen(false);
 			setPasswords({ current: '', new: '' });
-		} catch (error) {
-			console.error("Change password failed:", error);
+			setIsChangePassOpen(false);
+		} catch (error: any) {
+			// const errorMsg = error.response?.data?.message || error.response?.data?.error || "Invalid request data";
+			setCurPassError('Incorrect Current Password')
+			// alert(`Error: ${errorMsg}`);
 		} finally {
 			setIsSaving(false);
 		}
@@ -49,17 +55,20 @@ export function Header() {
 						{/* Droplet Icon */}
 						<div className="flex flex-col gap-2">
 							<div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
-								<Droplets className="w-12 h-12 text-cyan-200" />
+								{userRole === 'ADMIN' ? (
+									<ShieldAlert className="w-12 h-12 text-cyan-200" />
+								) : (
+									<Droplets className="w-12 h-12 text-cyan-200" />
+								)}
 							</div>
 						</div>
 						{/* Tiêu đề */}
 						<div className="flex-1">
-							<h1 className="text-2xl text-white">
-								AI-Based Water Quality Prediction &
-								Contamination Alert System
+							<h1 className="text-2xl text-white font-semibold">
+								{userRole === 'ADMIN' ? 'User Management' : 'AI-Based Water Quality Prediction \& Contamination Alert System'}
 							</h1>
 							<p className="text-cyan-100 text-lg">
-								Real-Time IoT + AI Monitoring
+								{userRole === 'ADMIN' ? 'Manage system access, roles, and permissions' : 'Real-Time IoT + AI Monitoring'}
 							</p>
 						</div>
 					</div>
@@ -121,14 +130,24 @@ export function Header() {
 							</div>
 
 							<form onSubmit={handleChangePassword} className="space-y-4">
-								<div className="">
-									<label className="text-xs font-bold text-gray-500 uppercase ml-1">Current Password</label>
+								<div className="relative">
+									{/* <label className="text-xs font-bold text-gray-500 uppercase ml-1">Current Password</label> */}
+									<label className={`text font-semibold ml-1 ${curPassError? "text-red-500" : "text-gray-900" }`}>
+										Current Password
+									</label>
 									<input
-										type="password"
+										type={showCurrentPass ? "text" : "password"}
 										required
 										value={passwords.current}
-										onChange={(e) => setPasswords({...passwords, current: e.target.value})}
-										className="w-full mt-1 px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none transition-all"
+										onChange={(e) => {
+											setPasswords({...passwords, current: e.target.value})
+											if (curPassError) setCurPassError('');
+										}}
+										className={`w-full mt-1 px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg outline-none transition-all ${
+											curPassError
+												? 'border-red-500 border-2 focus:border-red-500'
+												: 'border-gray-300 border-2 focus:border-cyan-500'
+										}`}
 										placeholder="••••••••"
 									/>
 									<button
@@ -140,22 +159,22 @@ export function Header() {
 									</button>
 								</div>
 
-								<div className="">
-									<label className="text-xs font-bold text-gray-500 uppercase ml-1">New Password</label>
+								<div className="relative">
+									<label className="font-semibold text-gray-900 ml-1">New Password</label>
 									<input
-										type="password"
+										type={showNewPass ? "text" : "password"}
 										required
 										value={passwords.new}
 										onChange={(e) => setPasswords({...passwords, new: e.target.value})}
-										className="w-full mt-1 px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none transition-all"
+										className="w-full mt-1 px-4 py-2 rounded-lg outline-none transition-all"
 										placeholder="••••••••"
 									/>
 									<button
 										type="button"
-										onClick={() => setShowCurrentPass(!showCurrentPass)}
+										onClick={() => setShowNewPass(!showNewPass)}
 										className="absolute right-3 bottom-1 -translate-y-1/2 text-gray-400 hover:text-cyan-600 transition-colors"
 									>
-										{showCurrentPass ? <EyeOff size={18} /> : <Eye size={18} />}
+										{showNewPass ? <EyeOff size={18} /> : <Eye size={18} />}
 									</button>
 								</div>
 

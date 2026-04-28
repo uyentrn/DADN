@@ -40,7 +40,7 @@ interface User {
   status: 'ACTIVE' | 'INACTIVE';
   phoneNumber?: string;
   urlAvatar?: string;
-  lastActive?: string;
+  // lastActive?: string;
 }
 
 export function Admin() {
@@ -225,39 +225,30 @@ export function Admin() {
     <div className="min-h-screen bg-gradient-to-br from-cyan-50 via-blue-50 to-blue-100 flex flex-col">
       <Header />
       
-      <main className="flex-1 max-w-[1600px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-        <div className="flex flex-row justify-between items-center gap-4">
-          <div>
-            <h2 className="text-cyan-900 text-3xl font-bold flex items-center gap-3">
-              <ShieldAlert className="w-8 h-8 text-cyan-900" />
-              User Management
-            </h2>
-            <p className="text-slate-600 mt-1">Manage system access, roles, and permissions.</p>
-          </div>
-          
-          <Button 
-            onClick={() => handleOpenDialog()} 
-            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-xl flex items-center shadow-md shrink-0"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add New User
-          </Button>
-        </div>
-
-        <div className="bg-white/80 backdrop-blur-xl border border-white/40 shadow-xl rounded-2xl overflow-hidden">
-          <div className="p-6 border-b border-slate-100">
-            <div className="relative w-full">
+      <main className="flex-1 max-w-[1600px] w-full px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        <div className="bg-white/80 mx-auto backdrop-blur-xl border border-white/40 shadow-xl rounded-2xl overflow-hidden">
+          <div className="px-10 py-6 flex flex-row justify-between items-center gap-10">
+            <div className="relative flex-1">
               <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
                 <Search className="w-5 h-5 text-slate-400" />
               </div>
               <Input 
                 placeholder="Search users by name or email..." 
-                className="w-full h-12 bg-white border-slate-200 rounded-2xl focus:border-slate-400"
+                className="w-full h-12 bg-gray-50 border border-gray-200 border-2 focus:border-cyan-500 rounded-2xl"
                 style={{ paddingLeft: '2.5rem' }}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
+
+            <Button 
+              onClick={() => handleOpenDialog()} 
+              // className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-xl flex items-center shadow-md shrink-0"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 h-12 rounded-xl flex items-center shadow-md shrink-0"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add New User
+            </Button>
           </div>
           
           <div className="overflow-x-auto">
@@ -267,7 +258,7 @@ export function Admin() {
                   <TableHead className="text-center font-bold">User</TableHead>
                   <TableHead className="text-center font-bold">Role</TableHead>
                   <TableHead className="text-center font-bold">Status</TableHead>
-                  <TableHead className="text-center font-bold">Last Active</TableHead>
+                  {/* <TableHead className="text-center font-bold">Last Active</TableHead> */}
                   <TableHead className="text-center font-bold">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -281,6 +272,7 @@ export function Admin() {
                 ) : (
                   filteredUsers.map((user) => (
                     <TableRow key={user.id} className="hover:bg-slate-50/50">
+                      {/* name */}
                       <TableCell>
                         <div className="flex items-center gap-4 ml-5">
                           <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700">
@@ -292,6 +284,8 @@ export function Admin() {
                           </div>
                         </div>
                       </TableCell>
+                      
+                      {/* role */}
                       <TableCell className="text-center">
                         {(() => {
                           const styles = {
@@ -310,6 +304,8 @@ export function Admin() {
                           );
                         })()}
                       </TableCell>
+                      
+                      {/* status */}
                       <TableCell className="text-center">
                         <Badge variant="secondary" className={
                           user.status === 'ACTIVE' 
@@ -320,9 +316,13 @@ export function Admin() {
                           {user.status}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-center text-slate-500 text-sm">
+                      
+                      {/* last active */}
+                      {/* <TableCell className="text-center text-slate-500 text-sm">
                         {user.lastActive}
-                      </TableCell>
+                      </TableCell> */}
+                      
+                      {/* Action */}
                       <TableCell className="text-center">
                         <div className="flex justify-center gap-3">
                           <Button 
