@@ -70,7 +70,8 @@ export function AIPredictionPanel() {
 	const accuracy = aiRawResult?.models[0].accuracy || 0;
 
 	return (
-		<div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl shadow-lg p-6 border border-indigo-100">
+		<div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
+		{/* <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl shadow-lg p-6 border border-indigo-100"> */}
 			<div className="flex items-center justify-between mb-6">
 				<div className="flex items-center gap-3">
 					<div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl p-3 shadow-md">
@@ -85,7 +86,7 @@ export function AIPredictionPanel() {
 
 			<div className="space-y-6">
 				{/* Water Quality Index */}
-				<div className="bg-white rounded-xl p-5 shadow-sm">
+				<div className="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
 					<div className="flex items-center justify-between mb-3">
 						<span className="text-gray-900 font-medium">Water Quality Index (WQI)</span>
 						<div className={`px-3 py-1 rounded-full text-xs ${
@@ -115,7 +116,7 @@ export function AIPredictionPanel() {
 				</div>
 
 				{/* AI Contamination Alert */}
-				<div className="bg-white rounded-xl p-5 shadow-sm">
+				<div className="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
 					<div className="flex items-center gap-2 mb-3">
 						<AlertTriangle className={`w-5 h-5 ${risk.status === 'Low Risk' ? 'text-green-500' : 'text-yellow-500'}`} />
 						<span className="text-gray-900 font-medium">Contamination Risk</span>
@@ -135,7 +136,7 @@ export function AIPredictionPanel() {
 				</div>
 
 				{/* 24h Forecast */}
-				<div className="bg-white rounded-xl p-5 shadow-sm">
+				<div className="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
 					<div className="flex items-center gap-2 mb-4">
 						<TrendingUp className="w-5 h-5 text-indigo-500" />
 						<span className="text-gray-900 font-medium">24h Forecast</span>

@@ -175,5 +175,31 @@ export const alertService = {
 	markAsRead: async (alertId: string) => {
 		const res = await api.put(`/api/v1/alerts/${alertId}/read`);
 		return res.data;
-	}
+	},
+
+	// Lấy cấu hình nhận mail hiện tại
+	getEmailSetting: async () => {
+        const res = await api.get(`/api/v1/alerts/settings/email`);
+        return res.data; // Trả về { enabled: boolean }
+    },
+
+	// Cập nhật trạng thái nhận mail
+	updateEmailSetting: async (enabled: boolean) => {
+        const res = await api.put(`/api/v1/alerts/settings/email`, { enabled });
+        return res.data;
+    }
+
 };
+
+/**
+ * Analytics Services
+ */
+export const analyticsService = {
+  getTrends: async (date?: string) => {
+    const res = await api.get('/api/analytics/trends', { 
+      params: { date }
+    });
+    return res.data;
+  }
+};
+

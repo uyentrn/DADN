@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { alertService } from '../services/api';
-import { AlertTriangle, AlertCircle, Info, XCircle, Bell, Loader2 } from 'lucide-react';
+import { AlertTriangle, AlertCircle, Info, XCircle, Bell, Loader2, Mail, } from 'lucide-react';
 
 // Interface cho dữ liệu từ Backend (dựa trên alert_routes.py)
 interface AlertItem {
@@ -15,6 +15,24 @@ interface AlertItem {
 export function AlertsPanel() {
   const [alerts, setAlerts] = useState<AlertItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isEmailEnabled, setIsEmailEnabled] = useState(false);
+  const [isUpdatingMail, setIsUpdatingMail] = useState(false);
+
+  const fetchInitialData = async () => {
+  try {
+    setLoading(true);
+    const [alertsData, emailSettings] = await Promise.all([
+      alertService.getAlerts('unread'),
+      alertService.getEmailSetting()
+    ]);
+    setAlerts(alertsData);
+    setIsEmailEnabled(emailSettings.enabled);
+  } catch (error) {
+    console.error("Failed to fetch initial data:", error);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const fetchAlerts = async () => {
     try {
@@ -29,17 +47,31 @@ export function AlertsPanel() {
   };
 
   useEffect(() => {
-    fetchAlerts();
-    // (Tùy chọn) Thiết lập polling mỗi 1 phút để cập nhật cảnh báo mới
-    const interval = setInterval(fetchAlerts, 60000);
+    fetchInitialData();
+    const minutes = 15;
+    const interval = setInterval(fetchAlerts, minutes * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
+
+  // Hàm xử lý tắt/bật tự động gửi mail
+  const handleToggleEmail = async () => {
+  try {
+    setIsUpdatingMail(true);
+    const nextStatus = !isEmailEnabled;
+    const response = await alertService.updateEmailSetting(nextStatus);
+    setIsEmailEnabled(response.enabled);
+    // toast.success(response.message); 
+  } catch (error) {
+    console.error("Failed to update email setting:", error);
+  } finally {
+    setIsUpdatingMail(false);
+  }
+};
 
   // Hàm đánh dấu đã đọc
   const handleMarkAsRead = async (id: string) => {
     try {
       await alertService.markAsRead(id);
-      // Cập nhật UI ngay lập tức bằng cách lọc bỏ alert vừa đọc
       setAlerts(prev => prev.filter(a => a.id !== id));
     } catch (error) {
       console.error("Failed to mark alert as read:", error);
@@ -66,18 +98,44 @@ export function AlertsPanel() {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 h-fit">
+    <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 max-h-[550px]">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-gray-900 font-medium">System Alerts</h2>
-        <div className="relative">
-          <Bell className="w-5 h-5 text-gray-600" />
-          {alerts.length > 0 && (
-            <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></div>
-          )}
+        <div className="flex items-center gap-4">
+          {/* Toggle Email Section */}
+          <button
+            onClick={handleToggleEmail}
+            disabled={isUpdatingMail}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all duration-300 ${
+              isEmailEnabled 
+                ? 'bg-green-50 border-green-200 text-green-700' 
+                : 'bg-gray-50 border-gray-200 text-gray-500'
+            }`}
+            title={isEmailEnabled ? "Disable Email Alerts" : "Enable Email Alerts"}
+          >
+            {isUpdatingMail ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : isEmailEnabled ? (
+              <Mail className="w-3.5 h-3.5" />
+            ) : (
+              <Mail className="w-3.5 h-3.5" />
+            )}
+            <span className="text-[11px] font-semibold uppercase tracking-tight">
+              {isEmailEnabled ? 'Mail On' : 'Mail Off'}
+            </span>
+          </button>
+
+          <div className="relative">
+            <Bell className="w-5 h-5 text-gray-600" />
+            {alerts.length > 0 && (
+              <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></div>
+            )}
+          </div>
         </div>
       </div>
 
-      <div className="space-y-3 max-h-[600px] overflow-y-auto pr-1">
+      <div className="space-y-3 max-h-[350px] overflow-y-auto pr-1">
+      {/* <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar"> */}
         {loading ? (
           <div className="flex justify-center py-10">
             <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
