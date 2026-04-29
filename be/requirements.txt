@@ -14,5 +14,5 @@ gunicorn==21.2.0
 APScheduler==3.10.4
 
 # --- Generative AI & External APIs ---
-google-generativeai
+groq
 requests==2.31.0
