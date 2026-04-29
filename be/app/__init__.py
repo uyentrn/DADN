@@ -69,7 +69,7 @@ def create_app():
     scheduler.add_job(
         func=sensor_health_task,
         trigger="interval",
-        minutes=10,
+        minutes=60*24,
         id="sensor_health_check",
         replace_existing=True,
     )
