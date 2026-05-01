@@ -77,7 +77,10 @@ export function LoginPage() {
         navigate('/admin');
       } else if (role === 'USER') {
         navigate('/');
-      } else {
+      } else if (role === 'MANAGER') {
+        navigate('/')
+      }
+      else {
         setPasswordError('Wrong password');
       }
     } catch (err) {

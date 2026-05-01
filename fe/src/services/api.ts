@@ -5,7 +5,7 @@ const API_URL = (import.meta as any).env.VITE_API_URL as string;
 
 const api = axios.create({
 	baseURL: API_URL,
-	timeout: 5000,
+	timeout: 100000,
 });
 
 // Interceptor để tự động đính kèm Token vào Header cho mỗi request

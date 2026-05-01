@@ -14,7 +14,7 @@ import { LoginPage } from './pages/LoginPage';
 // check authorize
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
     const isAuthenticated = document.cookie.includes('access_token');
-    const isUser = document.cookie.includes('user_role=USER');
+    const isUser = document.cookie.includes('user_role=USER') || document.cookie.includes('user_role=MANAGER');
     
     if (!isAuthenticated) return <Navigate to="/login" replace />;
     if (!isUser) return <Navigate to="/login" replace />;
