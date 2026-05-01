@@ -51,6 +51,9 @@ class SolutionAIService:
             weather_text = f"- Mưa: {'Có mưa' if weather_data.get('has_rain') else 'Không mưa'} ({weather_data.get('total_precipitation_mm', 0)} mm)\n"
             weather_text += f"- Nhiệt độ: {weather_data.get('avg_temperature_c', 28)} °C\n"
             weather_text += f"- Mây che phủ: {weather_data.get('avg_cloud_cover_pct', 50)}%"
+            weather_text += f"\n- Gió: {weather_data.get('max_wind_speed_kmh', 10)} km/h"
+            weather_text += f"\n- Độ ẩm: {weather_data.get('avg_humidity_pct', 70)}%"
+            weather_text += f"\n- Chỉ số UV: {weather_data.get('max_uv_index', 5)}"
 
         prompt = f"""
         Bạn là một chuyên gia tư vấn nuôi trồng thủy sản. Dựa vào dữ liệu dưới đây, hãy đưa ra phân tích và giải pháp khắc phục ngắn gọn, rõ ràng (Format bằng Markdown).
