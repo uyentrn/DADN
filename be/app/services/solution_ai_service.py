@@ -8,11 +8,16 @@ class SolutionAIService:
         self.client = Groq(api_key=Config.GROQ_API_KEY)
         
         self.model_name = "llama-3.3-70b-versatile" 
-        self.profile_path = 'app/modelsAI/good_water_profile.json'
+        root_dir = os.getcwd()
+        self.profile_path = os.path.join(root_dir, 'modelsAI', 'good_water_profile.json')
 
     def _find_lagging_parameters(self, current_sensor_data: dict) -> tuple[list, bool]:
         lagging_issues = []
         try:
+            if not os.path.exists(self.profile_path):
+                print(f"[LỖI NGHIÊM TRỌNG] Không tìm thấy file tại đường dẫn: {self.profile_path}")
+                return ["[LỖI HỆ THỐNG] Không tìm thấy hồ sơ chuẩn để đối chiếu."], False
+            
             with open(self.profile_path, 'r') as f:
                 good_profile = json.load(f)
                 
